@@ -32,8 +32,8 @@
   --sh2:0 4px 16px rgba(10,22,40,.1),0 1px 4px rgba(10,22,40,.06);
   --r:14px;--rs:8px;
 }
-html,body{overscroll-behavior-y:contain;}
-body{background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:15px;line-height:1.5;max-width:700px;margin:0 auto;min-height:100vh;padding-bottom:calc(4rem + env(safe-area-inset-bottom));word-break:keep-all;overscroll-behavior-y:contain;}
+html,body{overscroll-behavior-y:none;height:100%;}
+body{background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:15px;line-height:1.5;max-width:700px;margin:0 auto;min-height:100vh;padding-bottom:calc(4rem + env(safe-area-inset-bottom));word-break:keep-all;overscroll-behavior-y:none;}
 input,select,button{font-family:inherit}
 
 .screen{display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:var(--bg);z-index:200;overflow-y:auto;padding:1.5rem}
@@ -1105,17 +1105,17 @@ async function exportExcel(){
   wb.creator = '지출관리';
   const thin = {style:'thin', color:{argb:'FFD0D5DD'}};
   const border = {top:thin, left:thin, bottom:thin, right:thin};
-  const numFmt = '#,##0';
+  const numFmt = '#,##0;[Red]\\-#,##0';
   const COLS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P']; // NO,구분,지출항목,1~12월,계
 
   years().forEach(y=>{
     const yd = state.years[y];
     const ws = wb.addWorksheet(y);
     ws.columns = [
-      {width:5},{width:8},{width:16},
-      {width:10},{width:10},{width:10},{width:10},{width:10},{width:10},
-      {width:10},{width:10},{width:10},{width:10},{width:10},{width:10},
-      {width:13}
+      {width:5},{width:7},{width:15},
+      {width:13},{width:13},{width:13},{width:13},{width:13},{width:13},
+      {width:13},{width:13},{width:13},{width:13},{width:13},{width:13},
+      {width:15}
     ];
 
     let r = 1;
@@ -1208,7 +1208,7 @@ async function exportExcel(){
       const colLetter=COLS[ci-1];
       const c = ws.getCell(diffRow,ci);
       c.value = {formula:`${colLetter}${incSubRow}-${colLetter}${expTotalRow}`, result:0};
-      c.numFmt=numFmt; c.font={bold:true, color:{argb:'FF1A56DB'}};
+      c.numFmt=numFmt; c.font={bold:true};
       c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF6E5'}};
       c.border=border;
     }
@@ -1395,12 +1395,21 @@ window.addEventListener('popstate', function(){
 
 window.addEventListener('DOMContentLoaded', boot);
 
-/* 당겨서 새로고침(pull-to-refresh) 방지: 스크롤이 맨 위에 있을 때 아래로 당기는 동작만 막는다 */
+/* 당겨서 새로고침(pull-to-refresh) 방지: 모달 내부 스크롤은 그대로 두고,
+   페이지(또는 모달) 스크롤이 맨 위일 때 아래로 당기는 제스처만 막는다 */
 let _ptrStartY=0;
+function _findScrollAncestor(el){
+  while(el && el!==document.body){
+    const st = window.getComputedStyle(el);
+    if((st.overflowY==='auto'||st.overflowY==='scroll') && el.scrollHeight>el.clientHeight) return el;
+    el = el.parentElement;
+  }
+  return document.scrollingElement || document.documentElement;
+}
 document.addEventListener('touchstart', (e)=>{ _ptrStartY = e.touches[0].clientY; }, {passive:true});
 document.addEventListener('touchmove', (e)=>{
   const y = e.touches[0].clientY;
-  const scroller = document.scrollingElement || document.documentElement;
+  const scroller = _findScrollAncestor(e.target);
   if(scroller.scrollTop <= 0 && y > _ptrStartY){ e.preventDefault(); }
 }, {passive:false});
 </script>
