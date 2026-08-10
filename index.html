@@ -655,6 +655,31 @@ function runDataMigrations(){
     });
   });
   if(changed) saveLocal();
+
+  // 1회성 보정: 선택 '용돈'을 필수 '수연이 용돈'으로 대체(부모님 용돈만큼 제외), 2026년 7~12월 수연이 용돈 25만원 차감
+  const MIG_KEY='exp_mig_allowance_v1';
+  if(!localStorage.getItem(MIG_KEY)){
+    let mchanged=false;
+    Object.entries(state.years).forEach(([y,yd])=>{
+      const pocketIdx=yd.expenses.findIndex(it=>it.name==='용돈' && it.type==='선택');
+      const suyeon=yd.expenses.find(it=>it.name==='수연이 용돈');
+      const parents=yd.expenses.find(it=>it.name==='부모님 용돈');
+      if(pocketIdx>=0 && suyeon){
+        const pocket=yd.expenses[pocketIdx];
+        for(let mi=0; mi<12; mi++){
+          const v=Number(pocket.m[mi])||0;
+          if(v>0){ suyeon.m[mi] = v - (parents?(Number(parents.m[mi])||0):0); mchanged=true; }
+        }
+        yd.expenses.splice(pocketIdx,1);
+        mchanged=true;
+      }
+      if(y==='2026' && suyeon){
+        for(let mi=6; mi<=11; mi++){ suyeon.m[mi] = (Number(suyeon.m[mi])||0) - 250000; mchanged=true; }
+      }
+    });
+    if(mchanged) saveLocal();
+    localStorage.setItem(MIG_KEY, '1');
+  }
 }
 
 function showTab(name){
