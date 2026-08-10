@@ -113,6 +113,8 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
 .ei:focus{outline:none;border-color:var(--bl);box-shadow:0 0 0 3px rgba(26,86,219,.12);background:var(--s)}
 .ei-del{background:none;border:none;color:var(--t3);font-size:1.05rem;padding:.2rem .3rem;cursor:pointer;flex-shrink:0}
 .ei-del:hover{color:var(--rd)}
+.ei-more{background:none;border:none;color:var(--t3);font-size:1.2rem;font-weight:700;padding:.2rem .55rem;cursor:pointer;flex-shrink:0;line-height:1}
+.ei-more:active{color:var(--bl)}
 .ei-add{display:flex;gap:.5rem;padding:.6rem .75rem}
 .ei-add input{flex:1;background:var(--s2);border:1.5px dashed var(--bd2);border-radius:var(--rs);padding:.5rem .6rem;font-size:.85rem;color:var(--t)}
 .ei-add button{background:var(--bl);border:none;color:#fff;border-radius:var(--rs);padding:0 .9rem;font-size:.83rem;font-weight:700;cursor:pointer}
@@ -252,8 +254,8 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
       </div>
     </div>
     <div class="kgrid">
-      <div class="kpi"><div class="kpi-lbl">필수 지출</div><div class="kpi-val" id="kv-ess">—</div><div class="kpi-sub" id="ks-ess"></div></div>
-      <div class="kpi"><div class="kpi-lbl">선택 지출</div><div class="kpi-val" id="kv-disc">—</div><div class="kpi-sub" id="ks-disc"></div></div>
+      <div class="kpi" style="cursor:pointer" onclick="showCategoryBreakdown('필수')"><div class="kpi-lbl">필수 지출</div><div class="kpi-val" id="kv-ess">—</div><div class="kpi-sub" id="ks-ess"></div></div>
+      <div class="kpi" style="cursor:pointer" onclick="showCategoryBreakdown('선택')"><div class="kpi-lbl">선택 지출</div><div class="kpi-val" id="kv-disc">—</div><div class="kpi-sub" id="ks-disc"></div></div>
     </div>
     <div class="sl">필수 vs 선택 지출</div>
     <div class="card"><div class="cb">
@@ -271,6 +273,7 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
     <button class="period-switch" id="period-switch-entry" onclick="openPeriodModal()">
       <span id="period-switch-entry-label">—</span><span class="ps-arrow">▾</span>
     </button>
+    <button class="btn btn-s" id="entry-undo-btn" style="margin:0 0 .65rem;opacity:.4" onclick="undoLast()">↺ 되돌리기</button>
     <div class="card" style="margin-bottom:.65rem">
       <div class="cb" style="padding:.9rem 1.1rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.3rem .5rem">
         <div style="min-width:0">
@@ -320,6 +323,25 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
       </div>
       <div class="month-grid" id="periodMonthGrid"></div>
       <button class="btn btn-s" onclick="closePeriodModal()">닫기</button>
+    </div>
+  </div>
+
+  <!-- 항목 액션 시트 -->
+  <div class="dmodal-bg" id="itemActionModalBg">
+    <div class="dmodal">
+      <div class="year-label" id="itemActionTitle" style="margin-bottom:.9rem"></div>
+      <div id="itemActionBody"></div>
+      <button class="btn btn-s" onclick="closeItemActions()">취소</button>
+    </div>
+  </div>
+
+  <!-- 항목 상세 추이 모달 -->
+  <div class="dmodal-bg" id="itemDetailModalBg">
+    <div class="dmodal">
+      <div class="year-label" id="itemDetailTitle" style="margin-bottom:.9rem"></div>
+      <div style="position:relative;height:220px;margin-bottom:.9rem"><canvas id="itemDetailChart"></canvas></div>
+      <div class="dtw" style="margin-bottom:.9rem"><table class="dt" id="itemDetailYearTable"></table></div>
+      <button class="btn btn-s" onclick="closeItemDetail()">닫기</button>
     </div>
   </div>
 
@@ -429,7 +451,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 </script>
 <script>
 /* ══════════════ 지출관리 (심상현) ══════════════ */
-const SEED_DATA = {"2024":{"expenses":[{"type":"필수","name":"주거생활비","m":[895470,683320,619170,598840,459800,438110,430910,514800,958010,619820,497070,650000]},{"type":"필수","name":"대출이자","m":[582675,582675,582675,582675,582675,582675,582675,582675,582675,582675,582675,582675]},{"type":"필수","name":"금융보험료","m":[404889,495889,495889,495889,1792819,480649,2404769,480649,495889,480649,480649,480649]},{"type":"필수","name":"통신비","m":[153850,153850,153850,153850,153070,147880,148520,116590,96120,89600,89590,90000]},{"type":"필수","name":"세금","m":[582850,0,0,0,3479730,944130,2037110,11700,2950990,1614250,0,0]},{"type":"필수","name":"기부금","m":[50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]},{"type":"필수","name":"용돈","m":[800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000]},{"type":"필수","name":"의류미용비","m":[18000,18000,18000,18000,18000,18000,18000,18000,18000,18000,18000,18000]},{"type":"선택","name":"인터넷 쇼핑","m":[891422,932518,143252,394125,469786,529694,1237203,370492,242667,144585,66707,200000]},{"type":"선택","name":"외식","m":[45260,105000,97000,100000,277900,229500,103000,708700,887000,919000,1220600,600000]},{"type":"선택","name":"식비","m":[565170,734760,471230,431620,504710,271430,593580,426820,923980,375600,530280,300000]},{"type":"선택","name":"대리운전","m":[20000,20000,134300,46400,20000,117300,20000,20000,20000,20000,35000,55000]},{"type":"선택","name":"골프","m":[0,200000,0,400000,1198200,160800,0,0,177000,80000,720000,180500]},{"type":"선택","name":"여행","m":[0,0,0,0,0,5820000,866510,1513499,0,0,0,0]},{"type":"선택","name":"문화생활비","m":[49500,8320,25000,9000,16000,0,0,0,0,0,0,0]},{"type":"선택","name":"학비","m":[320000,320000,320000,320000,320000,320000,320000,320000,320000,320000,320000,450000]},{"type":"선택","name":"사회생활비","m":[100000,0,0,0,0,50000,0,0,0,0,0,0]},{"type":"선택","name":"차량 유지비","m":[198000,0,200000,0,166780,7800,0,3200,0,0,0,148000]},{"type":"선택","name":"교통비","m":[0,0,0,10500,0,0,0,0,0,0,0,0]},{"type":"선택","name":"하이패스","m":[124950,138170,118590,193210,171850,156810,229170,160700,116830,111950,137290,0]},{"type":"선택","name":"범칙금","m":[0,0,0,0,0,0,70000,0,110000,0,0,0]},{"type":"선택","name":"건강관리비","m":[28100,26560,231000,972490,370000,29640,0,40000,0,21500,410110,29400]}],"investments":[],"income":[]},"2025":{"expenses":[{"type":"필수","name":"주거생활비","m":[756110,710990,720640,688930,565180,535560,538640,595420,618230,485730,413900,514690]},{"type":"필수","name":"대출이자","m":[582675,582675,582675,582675,582675,582675,582675,582675,582675,582675,582675,582675]},{"type":"필수","name":"금융보험료","m":[404889,480649,480649,508955,2229380,1039310,452975,344058,349658,378708,365658,365658]},{"type":"필수","name":"통신비","m":[192410,89590,89600,52940,52500,303130,196140,196180,192240,145647,829870,239910]},{"type":"필수","name":"세금","m":[1557760,0,0,591000,14201690,0,5081370,966200,1242350,0,5277720,0]},{"type":"필수","name":"기부금","m":[50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]},{"type":"필수","name":"부모님 용돈","m":[800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000]},{"type":"필수","name":"생활비","m":[2800000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000]},{"type":"필수","name":"수연이 용돈","m":[0,0,0,200000,783000,13200000,900000,507800,230600,800000,200000,200000]},{"type":"선택","name":"쇼핑+아루관련","m":[746007,396806,790455,428129,2002326,3658789,1558265,1178801,1603261,1306755,512920,1209370]},{"type":"선택","name":"외식","m":[912450,672300,1038190,1188714,1561376,1397730,1043940,852280,1330935,1275643,608310,696800]},{"type":"선택","name":"기름값","m":[181000,217000,87000,254000,0,98000,96000,0,186000,244048,228000,103000]},{"type":"선택","name":"교통비","m":[16900,4600,32850,12400,37300,11400,18200,27100,60800,13000,14600,21100]},{"type":"선택","name":"하이패스","m":[50150,35870,74660,88740,72040,52930,46020,66300,60260,65460,91840,97850]},{"type":"선택","name":"대리운전","m":[35000,62000,21000,0,0,52700,43000,16000,94000,0,37000,73000]},{"type":"선택","name":"차량 유지비","m":[0,14100,0,115540,2000,15100,0,0,9600,18350,450000,8200]},{"type":"선택","name":"골프","m":[915750,0,124000,225800,418000,210000,437000,219500,381000,111000,620000,132000]},{"type":"선택","name":"여행","m":[4147000,148119,342350,0,0,740278,790000,0,280230,257211,0,0]},{"type":"선택","name":"문화생활비","m":[0,0,0,0,0,9900,9900,9900,53500,19900,9900,9900]},{"type":"선택","name":"사회생활비","m":[300000,0,200000,0,0,0,0,0,0,0,0,100000]},{"type":"필수","name":"의류미용비","m":[18000,5000,8000,16000,8000,53000,18000,16000,8000,10000,8000,16000]},{"type":"선택","name":"수연이 학원비","m":[376041,1545600,34160,0,450000,13950,921900,0,0,591100,520000,520000]},{"type":"선택","name":"건강관리비","m":[0,0,0,10200,417700,1000000,0,38600,141400,45400,0,780490]},{"type":"선택","name":"범칙금","m":[0,0,0,0,0,0,42160,0,0,0,0,0]}],"investments":[{"name":"중계형 ISA","m":[40000000,0,0,0,0,0,1000000,0,0,0,0,0]},{"name":"개인형 IRP","m":[250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000]},{"name":"퇴직연금 펀드","m":[750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000]},{"name":"노란우산","m":[1000000,1000000,1000000,1000000,1000000,1000000,1000000,200000,200000,200000,200000,200000]},{"name":"중계형 ISA (이정숙)","m":[1000000,0,0,4500000,0,0,1000000,0,0,0,0,0]}],"income":[{"name":"SK","m":[1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000]},{"name":"롯데","m":[1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000]},{"name":"오피스텔","m":[450000,450000,450000,450000,450000,0,0,250000,250000,250000,250000,250000]},{"name":"배당금 (세후)","m":[3290000,3430000,4140000,3390000,5170000,4873767,3760000,3690000,4490000,3050000,2310000,2990000]},{"name":"매직 스플릿 (미국)","m":[0,0,2584581.5,3449160,8401440,8195360,8923080,6025650,6566000,9711380,0,-8208450]},{"name":"매직 스플릿 (국내)","m":[27346,382644,899611,962859,-2729992,890472,441839,38540,588522,1019350,346882,200000]},{"name":"기타수입","m":[0,528000,2248000,1848000,1848000,1848000,1848000,1848000,1848000,1848000,2508000,0]},{"name":"비젼","m":[2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000]},{"name":"진영","m":[2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000]}]},"2026":{"expenses":[{"type":"필수","name":"주거생활비","m":[660950,703930,612270,621260,499140,453880,0,0,0,0,0,0]},{"type":"필수","name":"대출이자","m":[582675,582675,582675,582675,582675,582675,713101,713101,713101,713101,713101,713101]},{"type":"필수","name":"금융보험료","m":[411948,365658,365658,365358,365358,3253088,0,0,0,0,0,0]},{"type":"필수","name":"통신비","m":[219600,215260,240040,191550,179870,186200,0,0,0,0,0,0]},{"type":"필수","name":"세금","m":[1497930,0,0,587000,16907850,0,0,0,0,0,0,0]},{"type":"필수","name":"건강보험","m":[0,0,0,650000,650000,500000,500000,500000,500000,500000,500000,500000]},{"type":"필수","name":"기부금","m":[50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]},{"type":"필수","name":"부모님 용돈","m":[800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000]},{"type":"필수","name":"생활비","m":[0,0,0,0,0,0,0,0,0,0,0,0]},{"type":"필수","name":"수연이 용돈","m":[250000,250000,250000,250000,250000,672900,250000,250000,250000,250000,250000,250000]},{"type":"선택","name":"쇼핑","m":[2426680,1458933,1164460,503496,1063797,8383800,0,0,0,0,0,0]},{"type":"선택","name":"외식","m":[606690,761030,585122,1206886,1449890,981050,0,0,0,0,0,0]},{"type":"선택","name":"구독","m":[0,0,0,0,0,0,0,0,0,0,0,0]},{"type":"선택","name":"기름값","m":[234000,109000,101000,264000,182000,127000,0,0,0,0,0,0]},{"type":"선택","name":"교통비","m":[0,10800,10900,33200,44800,34900,0,0,0,0,0,0]},{"type":"선택","name":"하이패스","m":[88250,71050,70920,61710,78380,51550,0,0,0,0,0,0]},{"type":"선택","name":"대리운전","m":[0,19000,44000,72000,0,43000,0,0,0,0,0,0]},{"type":"선택","name":"차량 유지비","m":[0,0,15000,4100,67850,960000,0,0,0,0,0,0]},{"type":"선택","name":"골프","m":[161800,937750,221000,416000,0,1218600,0,0,0,0,0,0]},{"type":"선택","name":"여행","m":[1956049,1101347,4611458,0,0,0,0,0,0,0,0,0]},{"type":"선택","name":"문화생활비","m":[39900,9900,0,20000,10000,0,0,0,0,0,0,0]},{"type":"선택","name":"수연이 학원비","m":[551500,0,972100,0,640000,0,0,0,0,0,0,0]},{"type":"선택","name":"사회생활비","m":[0,0,0,0,100000,40000,0,0,0,0,0,0]},{"type":"필수","name":"의류미용비","m":[8000,12000,12000,24000,24000,12000,0,0,0,0,0,0]},{"type":"선택","name":"범칙금","m":[0,0,0,0,0,0,0,0,0,0,0,0]},{"type":"선택","name":"건강관리비","m":[23400,137090,862700,0,0,0,0,0,0,0,0,0]}],"investments":[{"name":"중계형 ISA","m":[0,10000000,0,0,0,5000000,2000000,0,0,0,0,0]},{"name":"개인형 IRP","m":[250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000]},{"name":"퇴직연금 펀드","m":[750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000]},{"name":"노란우산","m":[200000,200000,200000,200000,200000,200000,200000,200000,200000,200000,200000,200000]},{"name":"중계형 ISA (이정숙)","m":[10000000,0,1250000,0,12750000,3000000,0,0,0,0,0,0]}],"income":[{"name":"SK","m":[1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000]},{"name":"롯데","m":[1900000,1900000,1800000,1800000,1800000,1800000,1800000,1800000,1800000,1800000,1800000,1800000]},{"name":"오피스텔","m":[250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000]},{"name":"배당금","m":[2598601,2067208,2889501,4170699,4428407,2858747,3700000,3370000,3500000,3380000,3400000,4140000]},{"name":"매직 스플릿 (미국)","m":[7149123.5,-5250450,-5103000,2656878,592500,0,0,0,0,0,0,0]},{"name":"매직 스플릿 (국내)","m":[2443106,1342823,6820162,863174,0,231174,0,0,0,0,0,0]}]}};
+const SEED_DATA = {"2024":{"expenses":[{"type":"필수","name":"주거생활비","m":[895470,683320,619170,598840,459800,438110,430910,514800,958010,619820,497070,650000]},{"type":"필수","name":"대출이자","m":[582675,582675,582675,582675,582675,582675,582675,582675,582675,582675,582675,582675]},{"type":"필수","name":"금융보험료","m":[404889,495889,495889,495889,1792819,480649,2404769,480649,495889,480649,480649,480649]},{"type":"필수","name":"통신비","m":[153850,153850,153850,153850,153070,147880,148520,116590,96120,89600,89590,90000]},{"type":"필수","name":"세금","m":[582850,0,0,0,3479730,944130,2037110,11700,2950990,1614250,0,0]},{"type":"필수","name":"기부금","m":[50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]},{"type":"필수","name":"용돈","m":[800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000]},{"type":"선택","name":"의류미용비","m":[18000,18000,18000,18000,18000,18000,18000,18000,18000,18000,18000,18000]},{"type":"선택","name":"인터넷 쇼핑","m":[891422,932518,143252,394125,469786,529694,1237203,370492,242667,144585,66707,200000]},{"type":"선택","name":"외식","m":[45260,105000,97000,100000,277900,229500,103000,708700,887000,919000,1220600,600000]},{"type":"선택","name":"식비","m":[565170,734760,471230,431620,504710,271430,593580,426820,923980,375600,530280,300000]},{"type":"선택","name":"대리운전","m":[20000,20000,134300,46400,20000,117300,20000,20000,20000,20000,35000,55000]},{"type":"선택","name":"골프","m":[0,200000,0,400000,1198200,160800,0,0,177000,80000,720000,180500]},{"type":"선택","name":"여행","m":[0,0,0,0,0,5820000,866510,1513499,0,0,0,0]},{"type":"선택","name":"문화생활비","m":[49500,8320,25000,9000,16000,0,0,0,0,0,0,0]},{"type":"선택","name":"학비","m":[320000,320000,320000,320000,320000,320000,320000,320000,320000,320000,320000,450000]},{"type":"선택","name":"사회생활비","m":[100000,0,0,0,0,50000,0,0,0,0,0,0]},{"type":"선택","name":"차량 유지비","m":[198000,0,200000,0,166780,7800,0,3200,0,0,0,148000]},{"type":"선택","name":"교통비","m":[0,0,0,10500,0,0,0,0,0,0,0,0]},{"type":"선택","name":"하이패스","m":[124950,138170,118590,193210,171850,156810,229170,160700,116830,111950,137290,0]},{"type":"선택","name":"범칙금","m":[0,0,0,0,0,0,70000,0,110000,0,0,0]},{"type":"선택","name":"건강관리비","m":[28100,26560,231000,972490,370000,29640,0,40000,0,21500,410110,29400]}],"investments":[],"income":[]},"2025":{"expenses":[{"type":"필수","name":"주거생활비","m":[756110,710990,720640,688930,565180,535560,538640,595420,618230,485730,413900,514690]},{"type":"필수","name":"대출이자","m":[582675,582675,582675,582675,582675,582675,582675,582675,582675,582675,582675,582675]},{"type":"필수","name":"금융보험료","m":[404889,480649,480649,508955,2229380,1039310,452975,344058,349658,378708,365658,365658]},{"type":"필수","name":"통신비","m":[192410,89590,89600,52940,52500,303130,196140,196180,192240,145647,829870,239910]},{"type":"필수","name":"세금","m":[1557760,0,0,591000,14201690,0,5081370,966200,1242350,0,5277720,0]},{"type":"필수","name":"기부금","m":[50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]},{"type":"필수","name":"부모님 용돈","m":[800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000]},{"type":"필수","name":"생활비","m":[2800000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000]},{"type":"필수","name":"수연이 용돈","m":[0,0,0,200000,783000,13200000,900000,507800,230600,800000,200000,200000]},{"type":"선택","name":"쇼핑+아루관련","m":[746007,396806,790455,428129,2002326,3658789,1558265,1178801,1603261,1306755,512920,1209370]},{"type":"선택","name":"외식","m":[912450,672300,1038190,1188714,1561376,1397730,1043940,852280,1330935,1275643,608310,696800]},{"type":"선택","name":"기름값","m":[181000,217000,87000,254000,0,98000,96000,0,186000,244048,228000,103000]},{"type":"선택","name":"교통비","m":[16900,4600,32850,12400,37300,11400,18200,27100,60800,13000,14600,21100]},{"type":"선택","name":"하이패스","m":[50150,35870,74660,88740,72040,52930,46020,66300,60260,65460,91840,97850]},{"type":"선택","name":"대리운전","m":[35000,62000,21000,0,0,52700,43000,16000,94000,0,37000,73000]},{"type":"선택","name":"차량 유지비","m":[0,14100,0,115540,2000,15100,0,0,9600,18350,450000,8200]},{"type":"선택","name":"골프","m":[915750,0,124000,225800,418000,210000,437000,219500,381000,111000,620000,132000]},{"type":"선택","name":"여행","m":[4147000,148119,342350,0,0,740278,790000,0,280230,257211,0,0]},{"type":"선택","name":"문화생활비","m":[0,0,0,0,0,9900,9900,9900,53500,19900,9900,9900]},{"type":"선택","name":"사회생활비","m":[300000,0,200000,0,0,0,0,0,0,0,0,100000]},{"type":"선택","name":"의류미용비","m":[18000,5000,8000,16000,8000,53000,18000,16000,8000,10000,8000,16000]},{"type":"선택","name":"수연이 학원비","m":[376041,1545600,34160,0,450000,13950,921900,0,0,591100,520000,520000]},{"type":"선택","name":"건강관리비","m":[0,0,0,10200,417700,1000000,0,38600,141400,45400,0,780490]},{"type":"선택","name":"범칙금","m":[0,0,0,0,0,0,42160,0,0,0,0,0]}],"investments":[{"name":"중계형 ISA","m":[40000000,0,0,0,0,0,1000000,0,0,0,0,0]},{"name":"개인형 IRP","m":[250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000]},{"name":"퇴직연금 펀드","m":[750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000]},{"name":"노란우산","m":[1000000,1000000,1000000,1000000,1000000,1000000,1000000,200000,200000,200000,200000,200000]},{"name":"중계형 ISA (이정숙)","m":[1000000,0,0,4500000,0,0,1000000,0,0,0,0,0]}],"income":[{"name":"SK","m":[1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000]},{"name":"롯데","m":[1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000]},{"name":"오피스텔","m":[450000,450000,450000,450000,450000,0,0,250000,250000,250000,250000,250000]},{"name":"배당금 (세후)","m":[3290000,3430000,4140000,3390000,5170000,4873767,3760000,3690000,4490000,3050000,2310000,2990000]},{"name":"매직 스플릿 (미국)","m":[0,0,2584581.5,3449160,8401440,8195360,8923080,6025650,6566000,9711380,0,-8208450]},{"name":"매직 스플릿 (국내)","m":[27346,382644,899611,962859,-2729992,890472,441839,38540,588522,1019350,346882,200000]},{"name":"기타수입","m":[0,528000,2248000,1848000,1848000,1848000,1848000,1848000,1848000,1848000,2508000,0]},{"name":"비젼","m":[2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000]},{"name":"진영","m":[2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000]}]},"2026":{"expenses":[{"type":"필수","name":"주거생활비","m":[660950,703930,612270,621260,499140,453880,0,0,0,0,0,0]},{"type":"필수","name":"대출이자","m":[582675,582675,582675,582675,582675,582675,713101,713101,713101,713101,713101,713101]},{"type":"필수","name":"금융보험료","m":[411948,365658,365658,365358,365358,3253088,0,0,0,0,0,0]},{"type":"필수","name":"통신비","m":[219600,215260,240040,191550,179870,186200,0,0,0,0,0,0]},{"type":"필수","name":"세금","m":[1497930,0,0,587000,16907850,0,0,0,0,0,0,0]},{"type":"필수","name":"건강보험","m":[0,0,0,650000,650000,500000,500000,500000,500000,500000,500000,500000]},{"type":"필수","name":"기부금","m":[50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]},{"type":"필수","name":"부모님 용돈","m":[800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000]},{"type":"필수","name":"생활비","m":[0,0,0,0,0,0,0,0,0,0,0,0]},{"type":"필수","name":"수연이 용돈","m":[250000,250000,250000,250000,250000,672900,250000,250000,250000,250000,250000,250000]},{"type":"선택","name":"쇼핑","m":[2426680,1458933,1164460,503496,1063797,8383800,0,0,0,0,0,0]},{"type":"선택","name":"외식","m":[606690,761030,585122,1206886,1449890,981050,0,0,0,0,0,0]},{"type":"선택","name":"구독","m":[0,0,0,0,0,0,0,0,0,0,0,0]},{"type":"선택","name":"기름값","m":[234000,109000,101000,264000,182000,127000,0,0,0,0,0,0]},{"type":"선택","name":"교통비","m":[0,10800,10900,33200,44800,34900,0,0,0,0,0,0]},{"type":"선택","name":"하이패스","m":[88250,71050,70920,61710,78380,51550,0,0,0,0,0,0]},{"type":"선택","name":"대리운전","m":[0,19000,44000,72000,0,43000,0,0,0,0,0,0]},{"type":"선택","name":"차량 유지비","m":[0,0,15000,4100,67850,960000,0,0,0,0,0,0]},{"type":"선택","name":"골프","m":[161800,937750,221000,416000,0,1218600,0,0,0,0,0,0]},{"type":"선택","name":"여행","m":[1956049,1101347,4611458,0,0,0,0,0,0,0,0,0]},{"type":"선택","name":"문화생활비","m":[39900,9900,0,20000,10000,0,0,0,0,0,0,0]},{"type":"선택","name":"수연이 학원비","m":[551500,0,972100,0,640000,0,0,0,0,0,0,0]},{"type":"선택","name":"사회생활비","m":[0,0,0,0,100000,40000,0,0,0,0,0,0]},{"type":"선택","name":"의류미용비","m":[8000,12000,12000,24000,24000,12000,0,0,0,0,0,0]},{"type":"선택","name":"범칙금","m":[0,0,0,0,0,0,0,0,0,0,0,0]},{"type":"선택","name":"건강관리비","m":[23400,137090,862700,0,0,0,0,0,0,0,0,0]}],"investments":[{"name":"중계형 ISA","m":[0,10000000,0,0,0,5000000,2000000,0,0,0,0,0]},{"name":"개인형 IRP","m":[250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000]},{"name":"퇴직연금 펀드","m":[750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000]},{"name":"노란우산","m":[200000,200000,200000,200000,200000,200000,200000,200000,200000,200000,200000,200000]},{"name":"중계형 ISA (이정숙)","m":[10000000,0,1250000,0,12750000,3000000,0,0,0,0,0,0]}],"income":[{"name":"SK","m":[1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000]},{"name":"롯데","m":[1900000,1900000,1800000,1800000,1800000,1800000,1800000,1800000,1800000,1800000,1800000,1800000]},{"name":"오피스텔","m":[250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000]},{"name":"배당금","m":[2598601,2067208,2889501,4170699,4428407,2858747,3700000,3370000,3500000,3380000,3400000,4140000]},{"name":"매직 스플릿 (미국)","m":[7149123.5,-5250450,-5103000,2656878,592500,0,0,0,0,0,0,0]},{"name":"매직 스플릿 (국내)","m":[2443106,1342823,6820162,863174,0,231174,0,0,0,0,0,0]}]}};
 const MONTH_LABELS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const LS_KEY='exp_data_v1', LS_PIN='exp_pin', LS_FB='exp_fb_config', LS_THEME='exp_theme';
 
@@ -546,15 +568,13 @@ function boot(){
 }
 function enterApp(){ showScreen('app'); initApp(); }
 function lockApp(){ lBuf=''; updLD('normal'); setLoginMsg('',''); showScreen('login'); Object.keys(charts).forEach(k=>{ if(charts[k]){ charts[k].destroy(); charts[k]=null; } }); }
-document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState==='hidden'){
-    if(localStorage.getItem(LS_PIN) && document.getElementById('app').style.display==='block') lockApp();
-  }
-});
+/* 잠금 버튼을 직접 누르거나 뒤로가기로 앱을 완전히 나갈 때만 잠기고,
+   앱 전환/화면 꺼짐 등으로 잠깐 백그라운드로 갈 때는 자동 잠금하지 않는다. */
 
 /* ══════════════ 앱 초기화 ══════════════ */
 function initApp(){
   if(!loadLocal()){ seedFresh(); saveLocal(false); }
+  runDataMigrations();
   cur.year = years()[years().length-1] || String(new Date().getFullYear());
   cur.month = latestMonthWithData(cur.year);
   const savedFb = localStorage.getItem(LS_FB);
@@ -563,6 +583,15 @@ function initApp(){
   renderAll();
   bindEvents();
   if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+}
+function runDataMigrations(){
+  let changed=false;
+  Object.values(state.years).forEach(yd=>{
+    yd.expenses.forEach(it=>{
+      if(it.name==='의류미용비' && it.type==='필수'){ it.type='선택'; changed=true; }
+    });
+  });
+  if(changed) saveLocal();
 }
 
 function showTab(name){
@@ -653,7 +682,7 @@ function drawDonut(ess,disc){
   if(charts.donut) charts.donut.destroy();
   const total=ess+disc||1;
   charts.donut=new Chart(ctx,{type:'doughnut',data:{labels:['필수','선택'],datasets:[{data:[ess,disc],backgroundColor:['#1A56DB','#60A5FA'],borderWidth:0}]},
-    options:{cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>`${c.label}: ${fmtWon(c.raw)} (${Math.round(c.raw/total*100)}%)`}}}}});
+    options:{cutout:'68%',maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>`${c.label}: ${fmtWon(c.raw)} (${Math.round(c.raw/total*100)}%)`}}}}});
   document.getElementById('allocLeg').innerHTML=`
     <span style="display:flex;align-items:center;gap:5px;font-size:.76rem;color:var(--t2)"><span style="width:10px;height:10px;border-radius:3px;background:#1A56DB;display:inline-block"></span>필수</span>
     <span style="display:flex;align-items:center;gap:5px;font-size:.76rem;color:var(--t2)"><span style="width:10px;height:10px;border-radius:3px;background:#60A5FA;display:inline-block"></span>선택</span>`;
@@ -669,7 +698,7 @@ function drawTrend(){
   charts.trend=new Chart(ctx,{type:'line',data:{labels,datasets:[
     {label:'수입',data:inc,borderColor:'#15803D',backgroundColor:'rgba(21,128,61,.1)',fill:true,tension:.35},
     {label:'지출',data:exp,borderColor:'#1A56DB',backgroundColor:'rgba(26,86,219,.12)',fill:true,tension:.35}
-  ]},options:{plugins:{legend:{labels:{color:'#4A5568',boxWidth:10}}},scales:{
+  ]},options:{maintainAspectRatio:false,plugins:{legend:{labels:{color:'#4A5568',boxWidth:10}}},scales:{
     x:{ticks:{color:'#94A3B8'},grid:{display:false}},
     y:{ticks:{color:'#94A3B8',callback:(v)=>(v/10000)+'만'},grid:{color:'#E4E8F0'}}}}});
 }
@@ -678,46 +707,149 @@ function renderTop5(items,mi){
   const table=document.getElementById('top5Table');
   if(!ranked.length){ table.innerHTML='<tr><td class="empty">해당 월 지출 데이터가 없습니다</td></tr>'; return; }
   table.innerHTML='<tr><th>항목</th><th style="text-align:right">금액</th></tr>'+
-    ranked.map(r=>`<tr><td>${r.name}</td><td style="text-align:right" class="mono">${fmtWon(r.amt)}</td></tr>`).join('');
+    ranked.map(r=>`<tr style="cursor:pointer" onclick="showItemDetail('${r.name.replace(/'/g,"\\\\'")}')"><td>${r.name}</td><td style="text-align:right" class="mono">${fmtWon(r.amt)}</td></tr>`).join('');
 }
 
 /* ── 입력 ── */
+let entryUndoStack=[];
+function pushUndo(){ entryUndoStack.push(JSON.stringify(state)); if(entryUndoStack.length>20) entryUndoStack.shift(); document.getElementById('entry-undo-btn').style.opacity = entryUndoStack.length?'1':'.4'; }
+function undoLast(){
+  if(!entryUndoStack.length){ toast('되돌릴 내역이 없습니다'); return; }
+  state=JSON.parse(entryUndoStack.pop());
+  saveLocal(); renderAll(); toast('되돌렸습니다');
+  document.getElementById('entry-undo-btn').style.opacity = entryUndoStack.length?'1':'.4';
+}
+
+const SECTION_META={
+  '필수':{label:'필수 지출', arr:(yd)=>yd.expenses.filter(e=>e.type==='필수')},
+  '선택':{label:'선택 지출', arr:(yd)=>yd.expenses.filter(e=>e.type==='선택')},
+  '투자':{label:'투자/저축', arr:(yd)=>yd.investments},
+  '수입':{label:'수입', arr:(yd)=>yd.income}
+};
+function openItemActions(groupKey, items, idx){
+  const it=items[idx];
+  const yd=yearData();
+  const others=Object.keys(SECTION_META).filter(k=>k!==groupKey);
+  const moveButtons = others.map(k=>`<button class="btn btn-s" style="margin-top:.4rem" onclick="moveItemTo('${groupKey}',${idx},'${k}')">${SECTION_META[k].label}로 이동</button>`).join('');
+  document.getElementById('itemActionTitle').textContent = it.name;
+  document.getElementById('itemActionBody').innerHTML = `
+    <button class="btn btn-p" onclick="closeItemActions();showItemDetail('${it.name.replace(/'/g,"\\\\'")}')">📈 이 항목 추이 보기</button>
+    ${moveButtons}
+    <button class="btn btn-d" style="margin-top:.7rem" onclick="deleteItemConfirm('${groupKey}',${idx})">삭제</button>`;
+  document.getElementById('itemActionModalBg').classList.add('open');
+  _bhPush();
+}
+function closeItemActions(){ document.getElementById('itemActionModalBg').classList.remove('open'); }
+function moveItemTo(fromKey, idx, toKey){
+  const yd=yearData();
+  const fromItems=SECTION_META[fromKey].arr(yd);
+  const it=fromItems[idx];
+  pushUndo();
+  fromItems.splice(idx,1);
+  if(toKey==='투자'||toKey==='수입'){ delete it.type; }
+  else{ it.type=toKey; }
+  const targetArr = toKey==='투자'?yd.investments : toKey==='수입'?yd.income : yd.expenses;
+  targetArr.push(it);
+  saveLocal(); closeItemActions(); renderEntry(); renderDash();
+  toast(`'${it.name}' 항목을 ${SECTION_META[toKey].label}로 이동했습니다`);
+}
+async function deleteItemConfirm(groupKey, idx){
+  const yd=yearData(); const items=SECTION_META[groupKey].arr(yd); const it=items[idx];
+  closeItemActions();
+  if(await customConfirm(`'${it.name}' 항목을 삭제할까요?`)){
+    pushUndo();
+    items.splice(idx,1); saveLocal(); renderEntry(); renderDash();
+  }
+}
+
+/* 항목별 월별 추이 보기 */
+function showItemDetail(name){
+  document.getElementById('itemDetailTitle').textContent = name + ' 추이';
+  document.getElementById('itemDetailModalBg').classList.add('open');
+  _bhPush();
+  const ys=years(); const labels=[]; const values=[];
+  ys.forEach(y=>{
+    const yd=state.years[y];
+    const all=[...yd.expenses, ...yd.investments, ...yd.income];
+    const it=all.find(x=>x.name===name);
+    for(let mi=0; mi<12; mi++){
+      labels.push(`${String(y).slice(2)}.${mi+1}`);
+      values.push(it ? (Number(it.m[mi])||0) : 0);
+    }
+  });
+  setTimeout(()=>{
+    try{
+      const ctx=document.getElementById('itemDetailChart');
+      if(charts.itemDetail) charts.itemDetail.destroy();
+      if(ctx && typeof Chart!=='undefined'){
+        charts.itemDetail=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:values,backgroundColor:'#1A56DB'}]},
+          options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+            x:{ticks:{color:'#94A3B8',maxRotation:0,autoSkip:true},grid:{display:false}},
+            y:{ticks:{color:'#94A3B8',callback:(v)=>(v/10000)+'만'},grid:{color:'#E4E8F0'}}}}});
+      }
+    }catch(e){ console.warn('itemDetail 차트 오류:', e); }
+  }, 50);
+  const tbl=document.getElementById('itemDetailYearTable');
+  const rows=ys.map(y=>{
+    const yd=state.years[y]; const all=[...yd.expenses, ...yd.investments, ...yd.income];
+    const it=all.find(x=>x.name===name);
+    const total=it? it.m.reduce((a,b)=>a+(Number(b)||0),0) : 0;
+    return `<tr><td>${y}년</td><td style="text-align:right" class="mono">${fmtWon(total)}</td></tr>`;
+  }).join('');
+  tbl.innerHTML='<tr><th>연도</th><th style="text-align:right">연간 합계</th></tr>'+rows;
+}
+function closeItemDetail(){ document.getElementById('itemDetailModalBg').classList.remove('open'); }
+
+function showCategoryBreakdown(type){
+  const yd=yearData(); const mi=cur.month;
+  const items=yd.expenses.filter(e=>e.type===type).map(it=>({name:it.name, amt:Number(it.m[mi])||0})).sort((a,b)=>b.amt-a.amt);
+  const total=items.reduce((a,b)=>a+b.amt,0);
+  document.getElementById('itemActionTitle').textContent = `${type} 지출 · ${cur.year}년 ${MONTH_LABELS[mi]}`;
+  document.getElementById('itemActionBody').innerHTML = items.length ? `
+    <div class="dtw"><table class="dt">
+      <tr><th>항목</th><th style="text-align:right">금액</th></tr>
+      ${items.map(it=>`<tr style="cursor:pointer" onclick="closeItemActions();showItemDetail('${it.name.replace(/'/g,"\\\\'")}')"><td>${it.name}</td><td style="text-align:right" class="mono">${fmtWon(it.amt)}</td></tr>`).join('')}
+      <tr class="cat"><td>합계</td><td style="text-align:right" class="mono">${fmtWon(total)}</td></tr>
+    </table></div>` : '<p class="empty">해당 월 데이터가 없습니다</p>';
+  document.getElementById('itemActionModalBg').classList.add('open');
+  _bhPush();
+}
+
 function renderEntry(){
   const yd=yearData(); const mi=cur.month;
   const incTotal=sumMonth(yd.income,mi), expTotal=sumMonth(yd.expenses,mi);
   document.getElementById('entrySumTotal').textContent=fmtWon(incTotal-expTotal);
   const wrap=document.getElementById('entrySections'); wrap.innerHTML='';
-  function section(title,items){
+  function section(groupKey){
+    const meta=SECTION_META[groupKey]; const items=meta.arr(yd); const title=meta.label;
     const total=sumMonth(items,mi);
     const box=document.createElement('div'); box.className='card'; box.style.marginBottom='.7rem';
-    box.innerHTML=`<div class="cb" style="padding:.75rem 1.1rem;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:.88rem;font-weight:800">${title}</span><span class="mono" style="font-size:.82rem;color:var(--t2)">${fmtWon(total)}</span></div>`;
+    box.innerHTML=`<div class="cb" style="padding:.85rem 1.1rem;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:1.05rem;font-weight:900;color:var(--t)">${title}</span><span class="mono" style="font-size:1.05rem;font-weight:900;color:var(--bl)">${fmtWon(total)}</span></div>`;
     items.forEach((it,idx)=>{
       const row=document.createElement('div'); row.className='ei-item';
       row.innerHTML=`<input class="ei-lbl" value="${it.name.replace(/"/g,'&quot;')}">
         <input class="ei" inputmode="numeric" value="${(Number(it.m[mi])||0).toLocaleString('ko-KR')}">
-        <button class="ei-del">✕</button>`;
+        <button class="ei-more">⋮</button>`;
       const nameInput=row.querySelector('.ei-lbl'), amtInput=row.querySelector('.ei');
+      nameInput.onfocus=()=>{ pushUndo(); };
       nameInput.onchange=()=>{ it.name=nameInput.value.trim()||it.name; saveLocal(); };
-      amtInput.onfocus=()=>amtInput.select();
+      amtInput.onfocus=()=>{ pushUndo(); amtInput.select(); };
       amtInput.onchange=()=>{ const v=parseInt(amtInput.value.replace(/[^0-9-]/g,''))||0; it.m[mi]=v; amtInput.value=v.toLocaleString('ko-KR'); saveLocal(); renderDash(); renderEntry(); };
-      row.querySelector('.ei-del').onclick=async()=>{ if(await customConfirm(`'${it.name}' 항목을 삭제할까요?`)){ items.splice(idx,1); saveLocal(); renderEntry(); renderDash(); } };
+      row.querySelector('.ei-more').onclick=()=>openItemActions(groupKey, items, idx);
       box.appendChild(row);
     });
     const addRow=document.createElement('div'); addRow.className='ei-add';
     addRow.innerHTML=`<input placeholder="새 항목 이름"><button>추가</button>`;
     const addInput=addRow.querySelector('input');
     addRow.querySelector('button').onclick=()=>{ const name=addInput.value.trim(); if(!name) return;
-      const t=title.includes('필수')?'필수':title.includes('선택')?'선택':null;
-      const newItem=t?{type:t,name,m:new Array(12).fill(0)}:{name,m:new Array(12).fill(0)};
+      pushUndo();
+      const newItem=(groupKey==='필수'||groupKey==='선택')?{type:groupKey,name,m:new Array(12).fill(0)}:{name,m:new Array(12).fill(0)};
       items.push(newItem); addInput.value=''; saveLocal(); renderEntry(); renderDash(); };
     box.appendChild(addRow);
     wrap.appendChild(box);
   }
-  section('필수 지출', yd.expenses.filter(e=>e.type==='필수'));
-  section('선택 지출', yd.expenses.filter(e=>e.type==='선택'));
-  section('투자/저축', yd.investments);
-  section('수입', yd.income);
+  section('필수'); section('선택'); section('투자'); section('수입');
 }
 
 /* ── 분석 (기간 지정) ── */
@@ -823,7 +955,7 @@ function renderAnalysis(){
       if(charts.yearly) charts.yearly.destroy();
       charts.yearly=new Chart(ctx,{type:'bar',data:{labels:ys.map(y=>y+'년'),datasets:[
         {label:'수입',data:incArr,backgroundColor:'#15803D'},{label:'지출',data:expArr,backgroundColor:'#1A56DB'}
-      ]},options:{plugins:{legend:{labels:{color:'#4A5568',boxWidth:10}}},scales:{
+      ]},options:{maintainAspectRatio:false,plugins:{legend:{labels:{color:'#4A5568',boxWidth:10}}},scales:{
         x:{ticks:{color:'#94A3B8'},grid:{display:false}},y:{ticks:{color:'#94A3B8',callback:(v)=>(v/10000)+'만'},grid:{color:'#E4E8F0'}}}}});
     }
   }catch(e){ console.warn('yearly 차트 오류:', e); }
@@ -835,7 +967,7 @@ function renderAnalysis(){
   const rows=Object.entries(catMap).map(([name,byYear])=>{ const total=ys.reduce((a,y)=>a+(byYear[y]||0),0); return {name,byYear,total}; }).sort((a,b)=>b.total-a.total).slice(0,12);
   const catHist=document.getElementById('catHistoryTable');
   catHist.innerHTML='<tr><th>항목</th>'+ys.map(y=>`<th style="text-align:right">${y}</th>`).join('')+'</tr>'+
-    rows.map(r=>`<tr><td>${r.name}</td>`+ys.map(y=>`<td style="text-align:right" class="mono">${fmtWon(r.byYear[y]||0)}</td>`).join('')+'</tr>').join('');
+    rows.map(r=>`<tr style="cursor:pointer" onclick="showItemDetail('${r.name.replace(/'/g,"\\\\'")}')"><td>${r.name}</td>`+ys.map(y=>`<td style="text-align:right" class="mono">${fmtWon(r.byYear[y]||0)}</td>`).join('')+'</tr>').join('');
 }
 
 /* ── 연도 추가 ── */
@@ -873,19 +1005,37 @@ function exportExcel(){
   const wb=XLSX.utils.book_new();
   years().forEach(y=>{
     const yd=state.years[y]; const rows=[];
-    rows.push(['NO','구분','지출항목',...MONTH_LABELS,'계']);
-    function pushSection(items,hasIdx){
-      items.forEach((it,i)=>{ const total=it.m.reduce((a,b)=>a+(Number(b)||0),0); rows.push([hasIdx?i+1:'',it.type||'',it.name,...it.m,total]); });
-      rows.push(['','','합계',...MONTH_LABELS.map((_,mi)=>sumMonth(items,mi)),items.reduce((a,it)=>a+it.m.reduce((x,y)=>x+(Number(y)||0),0),0)]);
-      rows.push([]);
+    rows.push([y+'년']);
+    rows.push([]);
+    rows.push(['NO','','지출항목',...MONTH_LABELS,'계']);
+    const essential=yd.expenses.filter(e=>e.type==='필수');
+    const discretionary=yd.expenses.filter(e=>e.type==='선택');
+    function pushItems(items){
+      items.forEach((it,i)=>{ const total=it.m.reduce((a,b)=>a+(Number(b)||0),0); rows.push([i+1,it.type||'',it.name,...it.m,total]); });
     }
-    pushSection(yd.expenses.filter(e=>e.type==='필수'),true);
-    pushSection(yd.expenses.filter(e=>e.type==='선택'),true);
-    rows.push(['투자금']); pushSection(yd.investments,true);
-    rows.push(['수입']); pushSection(yd.income,false);
+    function subtotalRow(items){
+      const monthlyTotals=MONTH_LABELS.map((_,mi)=>sumMonth(items,mi));
+      const grand=items.reduce((a,it)=>a+it.m.reduce((x,y)=>x+(Number(y)||0),0),0);
+      return ['','','',...monthlyTotals,grand];
+    }
+    pushItems(essential); rows.push(subtotalRow(essential)); rows.push([]);
+    pushItems(discretionary); rows.push(subtotalRow(discretionary)); rows.push([]);
+    const allExpense=essential.concat(discretionary);
+    const expMonthly=MONTH_LABELS.map((_,mi)=>sumMonth(allExpense,mi));
+    const expGrand=allExpense.reduce((a,it)=>a+it.m.reduce((x,y)=>x+(Number(y)||0),0),0);
+    rows.push(['','','계',...expMonthly,expGrand]);
+    rows.push(['투자금']);
+    pushItems(yd.investments); rows.push(subtotalRow(yd.investments));
+    rows.push(['수입']);
+    pushItems(yd.income);
+    const incMonthly=MONTH_LABELS.map((_,mi)=>sumMonth(yd.income,mi));
+    const incGrand=yd.income.reduce((a,it)=>a+it.m.reduce((x,y)=>x+(Number(y)||0),0),0);
+    rows.push(['','','계',...incMonthly,incGrand]);
+    const diffMonthly=MONTH_LABELS.map((_,mi)=>incMonthly[mi]-expMonthly[mi]);
+    rows.push(['','','수입 - 지출',...diffMonthly,incGrand-expGrand]);
     const ws=XLSX.utils.aoa_to_sheet(rows); XLSX.utils.book_append_sheet(wb,ws,y);
   });
-  XLSX.writeFile(wb,`지출관리_${new Date().toISOString().slice(0,10)}.xlsx`);
+  XLSX.writeFile(wb,`지출내역_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('Excel 파일을 내보냈습니다');
 }
 function bindEvents(){
@@ -1043,6 +1193,10 @@ window.addEventListener('popstate', function(){
   const appVisible=document.getElementById('app').style.display!=='none';
   const modalEl=document.getElementById('modal');
   const periodEl=document.getElementById('periodModalBg');
+  const itemActionEl=document.getElementById('itemActionModalBg');
+  const itemDetailEl=document.getElementById('itemDetailModalBg');
+  if(itemDetailEl && itemDetailEl.classList.contains('open')){ closeItemDetail(); _bhPush(); return; }
+  if(itemActionEl && itemActionEl.classList.contains('open')){ closeItemActions(); _bhPush(); return; }
   if(periodEl && periodEl.classList.contains('open')){ closePeriodModal(); _bhPush(); return; }
   if(modalEl && modalEl.classList.contains('open')){ modalDone(false); _bhPush(); return; }
   if(appVisible && _bhCurrentTab()!=='dash'){ showTab('dash'); _bhPush(); return; }
