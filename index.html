@@ -181,13 +181,13 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
 .year-nav-btn{background:var(--s2);border:1.5px solid var(--bd);border-radius:8px;width:26px;height:26px;font-size:.85rem;color:var(--t2);cursor:pointer;line-height:1}
 .year-nav-btn:active{background:var(--bd)}
 .year-label{font-size:1.1rem;font-weight:800;color:var(--t);min-width:80px;text-align:center}
-.month-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.4rem}
-.month-card{background:var(--s2);border-radius:var(--rs);box-shadow:var(--sh);padding:.7rem .55rem;text-align:center;cursor:pointer;transition:all .12s;position:relative;border:1.5px solid transparent}
+.month-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;margin-bottom:.4rem;width:100%}
+.month-card{background:var(--s2);border-radius:var(--rs);box-shadow:var(--sh);padding:.7rem .4rem;text-align:center;cursor:pointer;transition:all .12s;position:relative;border:1.5px solid transparent;min-width:0}
 .month-card:active{transform:scale(.96)}
 .month-card.current{border-color:var(--bl);background:var(--bl-l)}
 .month-card .mc-name{font-size:.74rem;font-weight:700;color:var(--t2);margin-bottom:.32rem}
 .month-card.current .mc-name{color:var(--bl)}
-.month-card .mc-total{font-size:.76rem;font-weight:800;font-family:'SF Mono',Consolas,monospace;color:var(--t);white-space:nowrap;overflow-x:hidden;text-overflow:ellipsis}
+.month-card .mc-total{font-size:.76rem;font-weight:800;font-family:'SF Mono',Consolas,monospace;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 </style>
 </head>
 <body>
@@ -1025,7 +1025,7 @@ function renderMonthlyGrid(){
     const hasData = exp>0;
     return `<div class="month-card${isCur?' current':''}" onclick="showMonthExpenseList('${y}',${mi})">
       <div class="mc-name">${label}</div>
-      <div class="mc-total" style="font-size:.95rem;color:${hasData?'var(--t)':'var(--t3)'}">${fmtWon(exp)}</div>
+      <div class="mc-total" style="font-size:.8rem;color:${hasData?'var(--t)':'var(--t3)'}">${fmtWon(exp)}</div>
     </div>`;
   }).join('');
 }
