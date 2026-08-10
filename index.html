@@ -300,13 +300,13 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
       <button class="btn btn-p" onclick="applyCustomRange()">이 기간으로 분석</button>
     </div></div>
 
-    <div class="sl">월별 지출 합계 (탭하면 세부내역)</div>
-    <div class="card"><div class="cb" id="rangeMonthlyList"></div></div>
-
     <div class="kgrid" id="range-kpis"></div>
 
     <div class="sl">기간 내 월별 수입/지출 추이</div>
     <div class="card"><div class="cb"><div style="position:relative;height:210px"><canvas id="rangeTrendChart"></canvas></div></div></div>
+
+    <div class="sl">월별 지출 합계 (탭하면 세부내역)</div>
+    <div class="month-grid" id="rangeMonthlyList" style="margin-bottom:.9rem"></div>
 
     <div class="sl">기간 내 지출 카테고리 TOP 8</div>
     <div class="card"><div class="cb"><div style="position:relative;height:230px" id="rangeCatChartWrap"><canvas id="rangeCatChart"></canvas></div></div></div>
@@ -1054,14 +1054,9 @@ function renderRangeAnalysis(){
   });
   const maxExp = Math.max(1, ...monthlyExp.map(x=>x.exp));
   document.getElementById('rangeMonthlyList').innerHTML = monthlyExp.map(x=>`
-    <div style="cursor:pointer;padding:.5rem 0" onclick="showMonthExpenseList('${x.y}',${x.m})">
-      <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.3rem">
-        <span style="font-weight:700">${x.y}년 ${MONTH_LABELS[x.m]}</span>
-        <span class="mono" style="font-weight:800;color:var(--bl)">${fmtWon(x.exp)}</span>
-      </div>
-      <div style="height:7px;background:var(--s2);border-radius:99px;overflow:hidden">
-        <div style="height:100%;border-radius:99px;background:var(--bl);width:${(x.exp/maxExp*100).toFixed(0)}%"></div>
-      </div>
+    <div class="month-card" onclick="showMonthExpenseList('${x.y}',${x.m})">
+      <div class="mc-name">${x.y}년 ${MONTH_LABELS[x.m]}</div>
+      <div class="mc-total" style="font-size:.95rem;color:var(--t)">${fmtWon(x.exp)}</div>
     </div>`).join('');
   const net=totInc-totExp;
   document.getElementById('range-kpis').innerHTML=`
