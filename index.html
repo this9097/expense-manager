@@ -300,6 +300,9 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
       <button class="btn btn-p" onclick="applyCustomRange()">이 기간으로 분석</button>
     </div></div>
 
+    <div class="sl">월별 지출 합계 (탭하면 세부내역)</div>
+    <div class="card"><div class="cb" id="rangeMonthlyList"></div></div>
+
     <div class="kgrid" id="range-kpis"></div>
 
     <div class="sl">기간 내 월별 수입/지출 추이</div>
@@ -935,6 +938,22 @@ function showCategoryBreakdown(type){
   _bhPush();
 }
 
+/* 분석탭 월별 지출 목록에서 특정 월을 탭했을 때 세부 항목 표시 */
+function showMonthExpenseList(y, mi){
+  const yd=state.years[y]; if(!yd) return;
+  const items=yd.expenses.map(it=>({name:it.name, type:it.type, amt:Number(it.m[mi])||0})).filter(x=>x.amt>0).sort((a,b)=>b.amt-a.amt);
+  const total=items.reduce((a,b)=>a+b.amt,0);
+  document.getElementById('itemActionTitle').textContent = `${y}년 ${MONTH_LABELS[mi]} 지출 세부내역`;
+  document.getElementById('itemActionBody').innerHTML = items.length ? `
+    <div class="dtw"><table class="dt">
+      <tr><th>항목</th><th>구분</th><th style="text-align:right">금액</th></tr>
+      ${items.map(it=>`<tr style="cursor:pointer" onclick="closeItemActions();showItemDetail('${it.name.replace(/'/g,"\\\\'")}')"><td>${it.name}</td><td>${it.type}</td><td style="text-align:right" class="mono">${fmtWon(it.amt)}</td></tr>`).join('')}
+      <tr class="cat"><td>합계</td><td></td><td style="text-align:right" class="mono">${fmtWon(total)}</td></tr>
+    </table></div>` : '<p class="empty">해당 월 지출 데이터가 없습니다</p>';
+  document.getElementById('itemActionModalBg').classList.add('open');
+  _bhPush();
+}
+
 function renderEntry(){
   const yd=yearData(); const mi=cur.month;
   const incTotal=sumMonth(yd.income,mi), expTotal=sumMonth(yd.expenses,mi);
@@ -1024,13 +1043,26 @@ function renderRangeAnalysis(){
   let totInc=0, totExp=0;
   const catTotals={};
   const labels=[], incArr=[], expArr=[];
+  const monthlyExp=[];
   months.forEach(({y,m})=>{
     const yd=state.years[y]; if(!yd) return;
     const inc=sumMonth(yd.income,m), exp=sumMonth(yd.expenses,m);
     totInc+=inc; totExp+=exp;
     labels.push(`${String(y).slice(2)}.${m+1}`); incArr.push(inc); expArr.push(exp);
+    monthlyExp.push({y,m,exp});
     yd.expenses.forEach(it=>{ const v=Number(it.m[m])||0; if(v>0) catTotals[it.name]=(catTotals[it.name]||0)+v; });
   });
+  const maxExp = Math.max(1, ...monthlyExp.map(x=>x.exp));
+  document.getElementById('rangeMonthlyList').innerHTML = monthlyExp.map(x=>`
+    <div style="cursor:pointer;padding:.5rem 0" onclick="showMonthExpenseList('${x.y}',${x.m})">
+      <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.3rem">
+        <span style="font-weight:700">${x.y}년 ${MONTH_LABELS[x.m]}</span>
+        <span class="mono" style="font-weight:800;color:var(--bl)">${fmtWon(x.exp)}</span>
+      </div>
+      <div style="height:7px;background:var(--s2);border-radius:99px;overflow:hidden">
+        <div style="height:100%;border-radius:99px;background:var(--bl);width:${(x.exp/maxExp*100).toFixed(0)}%"></div>
+      </div>
+    </div>`).join('');
   const net=totInc-totExp;
   document.getElementById('range-kpis').innerHTML=`
     <div class="kpi"><div class="kpi-lbl">기간 총수입</div><div class="kpi-val">${fmtWon(totInc)}</div></div>
