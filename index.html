@@ -162,6 +162,25 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
 .iz{border:2px dashed var(--bd2);border-radius:var(--r);padding:1.2rem;text-align:center;color:var(--t2);font-size:.87rem;cursor:pointer;transition:all .15s}
 .iz:hover{border-color:var(--bl);color:var(--bl);background:var(--bl-l)}
 .ver{text-align:center;color:var(--t3);font-size:.73rem;padding:1.4rem 0 .5rem}
+
+/* ── 기간 선택 스위치 & 바텀시트 ── */
+.period-switch{display:flex;align-items:center;justify-content:center;gap:.4rem;width:100%;background:var(--s);border:1.5px solid var(--bd);border-radius:12px;box-shadow:var(--sh);color:var(--t);font-size:1rem;font-weight:800;padding:.7rem;cursor:pointer;margin-bottom:.8rem}
+.period-switch:active{background:var(--s2)}
+.ps-arrow{color:var(--t3);font-size:.8rem}
+.dmodal-bg{display:none;position:fixed;inset:0;background:rgba(10,22,40,.5);z-index:500;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.dmodal-bg.open{display:flex}
+.dmodal{background:var(--s);border-radius:20px 20px 0 0;padding:1.3rem 1.2rem calc(1.3rem + env(safe-area-inset-bottom));max-width:520px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:var(--sh2)}
+.year-nav{display:flex;align-items:center;justify-content:center;gap:1rem;margin-bottom:.9rem}
+.year-nav button{background:var(--s2);border:1.5px solid var(--bd);border-radius:10px;width:38px;height:38px;font-size:1.1rem;color:var(--t2);cursor:pointer;box-shadow:var(--sh)}
+.year-nav button:active{background:var(--bd)}
+.year-label{font-size:1.1rem;font-weight:800;color:var(--t);min-width:80px;text-align:center}
+.month-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.4rem}
+.month-card{background:var(--s2);border-radius:var(--rs);box-shadow:var(--sh);padding:.7rem .55rem;text-align:center;cursor:pointer;transition:all .12s;position:relative;border:1.5px solid transparent}
+.month-card:active{transform:scale(.96)}
+.month-card.current{border-color:var(--bl);background:var(--bl-l)}
+.month-card .mc-name{font-size:.74rem;font-weight:700;color:var(--t2);margin-bottom:.32rem}
+.month-card.current .mc-name{color:var(--bl)}
+.month-card .mc-total{font-size:.76rem;font-weight:800;font-family:'SF Mono',Consolas,monospace;color:var(--t);white-space:nowrap;overflow-x:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -218,9 +237,9 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
 
   <!-- Overview -->
   <div id="tab-dash" class="tab active">
-    <p style="color:var(--t3);font-size:.76rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:.85rem" id="dashDate"></p>
-    <div class="pbrow" id="year-chips"></div>
-    <div class="pbrow" id="month-chips"></div>
+    <button class="period-switch" id="period-switch-dash" onclick="openPeriodModal()">
+      <span id="period-switch-dash-label">—</span><span class="ps-arrow">▾</span>
+    </button>
     <div class="hero">
       <div class="hero-lbl">이번달 수입 - 지출</div>
       <div class="hero-val" id="hv-net">—</div>
@@ -249,8 +268,9 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
 
   <!-- 입력 -->
   <div id="tab-entry" class="tab">
-    <div class="pbrow" id="year-chips-2"></div>
-    <div class="pbrow" id="month-chips-2"></div>
+    <button class="period-switch" id="period-switch-entry" onclick="openPeriodModal()">
+      <span id="period-switch-entry-label">—</span><span class="ps-arrow">▾</span>
+    </button>
     <div class="card" style="margin-bottom:.65rem">
       <div class="cb" style="padding:.9rem 1.1rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.3rem .5rem">
         <div style="min-width:0">
@@ -264,12 +284,43 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
 
   <!-- 분석 -->
   <div id="tab-analysis" class="tab">
+    <div class="sl">기간 지정 분석</div>
+    <div class="card"><div class="cb">
+      <div class="pbrow" id="range-preset-chips"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem">
+        <div><div class="note" style="margin-bottom:.25rem">시작</div><select class="set-in full" id="range-start" style="margin-top:0"></select></div>
+        <div><div class="note" style="margin-bottom:.25rem">종료</div><select class="set-in full" id="range-end" style="margin-top:0"></select></div>
+      </div>
+      <button class="btn btn-p" onclick="applyCustomRange()">이 기간으로 분석</button>
+    </div></div>
+
+    <div class="kgrid" id="range-kpis"></div>
+
+    <div class="sl">기간 내 월별 수입/지출 추이</div>
+    <div class="card"><div class="cb"><div style="position:relative;height:210px"><canvas id="rangeTrendChart"></canvas></div></div></div>
+
+    <div class="sl">기간 내 지출 카테고리 TOP 8</div>
+    <div class="card"><div class="cb"><div style="position:relative;height:230px"><canvas id="rangeCatChart"></canvas></div></div></div>
+
     <div class="sl">연도별 비교</div>
     <div class="card"><div class="cb"><div style="position:relative;height:210px"><canvas id="yearlyChart"></canvas></div></div></div>
     <div class="sl">연도별 요약</div>
     <div class="card"><div class="dtw"><table class="dt" id="yearSummaryTable"></table></div></div>
     <div class="sl">카테고리별 3개년 합계</div>
     <div class="card"><div class="dtw"><table class="dt" id="catHistoryTable"></table></div></div>
+  </div>
+
+  <!-- 기간 선택 바텀시트 -->
+  <div class="dmodal-bg" id="periodModalBg">
+    <div class="dmodal">
+      <div class="year-nav">
+        <button onclick="periodNavYear(-1)">‹</button>
+        <span class="year-label" id="periodYearLabel"></span>
+        <button onclick="periodNavYear(1)">›</button>
+      </div>
+      <div class="month-grid" id="periodMonthGrid"></div>
+      <button class="btn btn-s" onclick="closePeriodModal()">닫기</button>
+    </div>
   </div>
 
   <!-- 설정 -->
@@ -486,30 +537,53 @@ function showTab(name){
 }
 
 function renderAll(){
-  document.getElementById('dashDate').textContent = `${cur.year}년 ${MONTH_LABELS[cur.month]}`;
-  renderYearChips(); renderMonthChips();
-  renderDash(); renderEntry();
+  updatePeriodSwitchLabels();
+  // 입력 탭은 차트 라이브러리와 무관하게 항상 먼저 채운다 (차트 로딩 실패가 다른 화면을 막지 않도록)
+  try{ renderEntry(); }catch(e){ console.warn('renderEntry 오류:', e); }
+  try{ renderDash(); }catch(e){ console.warn('renderDash 오류:', e); }
+}
+function updatePeriodSwitchLabels(){
+  const label = `${cur.year}년 ${MONTH_LABELS[cur.month]}`;
+  const a=document.getElementById('period-switch-dash-label'), b=document.getElementById('period-switch-entry-label');
+  if(a) a.textContent=label; if(b) b.textContent=label;
 }
 
-function renderYearChips(){
-  ['year-chips','year-chips-2'].forEach(id=>{
-    const wrap=document.getElementById(id); wrap.innerHTML='';
-    years().forEach(y=>{
-      const b=document.createElement('button'); b.className='pbtn'+(y===cur.year?' active':''); b.textContent=y+'년';
-      b.onclick=()=>{ cur.year=y; cur.month=latestMonthWithData(y); renderAll(); };
-      wrap.appendChild(b);
-    });
-  });
+/* ── 기간 선택 바텀시트 (연도 → 월 드릴다운) ── */
+let periodModalYear = null;
+function openPeriodModal(){
+  periodModalYear = cur.year;
+  renderPeriodModal();
+  document.getElementById('periodModalBg').classList.add('open');
+  _bhPush();
 }
-function renderMonthChips(){
-  ['month-chips','month-chips-2'].forEach(id=>{
-    const wrap=document.getElementById(id); wrap.innerHTML='';
-    MONTH_LABELS.forEach((label,mi)=>{
-      const b=document.createElement('button'); b.className='pbtn'+(mi===cur.month?' active':''); b.textContent=label;
-      b.onclick=()=>{ cur.month=mi; renderAll(); };
-      wrap.appendChild(b);
-    });
-  });
+function closePeriodModal(){ document.getElementById('periodModalBg').classList.remove('open'); }
+function periodNavYear(delta){
+  const ys=years(); let idx=ys.indexOf(periodModalYear);
+  if(idx===-1) idx=ys.length-1;
+  idx+=delta;
+  if(idx<0 || idx>=ys.length){
+    // 목록에 없는 연도면 설정 탭에서 새 연도를 추가하도록 안내
+    if(delta>0 && idx>=ys.length){ toast('설정 탭에서 새 연도를 추가할 수 있습니다'); }
+    return;
+  }
+  periodModalYear = ys[idx];
+  renderPeriodModal();
+}
+function renderPeriodModal(){
+  document.getElementById('periodYearLabel').textContent = periodModalYear + '년';
+  const yd = state.years[periodModalYear] || {expenses:[],income:[]};
+  const grid = document.getElementById('periodMonthGrid');
+  grid.innerHTML = MONTH_LABELS.map((label,mi)=>{
+    const net = sumMonth(yd.income,mi) - sumMonth(yd.expenses,mi);
+    const isCur = periodModalYear===cur.year && mi===cur.month;
+    return `<div class="month-card${isCur?' current':''}" onclick="selectPeriod('${periodModalYear}',${mi})">
+      <div class="mc-name">${label}</div>
+      <div class="mc-total ${net>=0?'pos':'neg'}">${fmtWon(net)}</div>
+    </div>`;
+  }).join('');
+}
+function selectPeriod(y,mi){
+  cur.year=y; cur.month=mi; closePeriodModal(); renderAll();
 }
 
 /* ── 대시보드 ── */
@@ -520,7 +594,7 @@ function renderDash(){
   const essTotal=sumMonth(essential,mi), discTotal=sumMonth(discretionary,mi);
   const expTotal=essTotal+discTotal, incTotal=sumMonth(yd.income,mi), invTotal=sumMonth(yd.investments,mi);
   const net=incTotal-expTotal;
-  document.getElementById('dashDate').textContent=`${cur.year}년 ${MONTH_LABELS[mi]}`;
+  updatePeriodSwitchLabels();
   document.getElementById('hv-net').textContent=fmtWon(net);
   document.getElementById('hs-inc').textContent=fmtWon(incTotal);
   document.getElementById('hs-exp').textContent=fmtWon(expTotal);
@@ -529,10 +603,14 @@ function renderDash(){
   document.getElementById('kv-disc').textContent=fmtWon(discTotal);
   document.getElementById('ks-ess').textContent=essTotal+discTotal>0?Math.round(essTotal/(essTotal+discTotal)*100)+'% 비중':'';
   document.getElementById('ks-disc').textContent=essTotal+discTotal>0?Math.round(discTotal/(essTotal+discTotal)*100)+'% 비중':'';
-  drawDonut(essTotal,discTotal); drawTrend(); renderTop5(essential.concat(discretionary),mi);
+  try{ drawDonut(essTotal,discTotal); }catch(e){ console.warn('donut 차트 오류:', e); }
+  try{ drawTrend(); }catch(e){ console.warn('trend 차트 오류:', e); }
+  renderTop5(essential.concat(discretionary),mi);
 }
 function drawDonut(ess,disc){
-  const ctx=document.getElementById('allocChart'); if(charts.donut) charts.donut.destroy();
+  const ctx=document.getElementById('allocChart');
+  if(!ctx || typeof Chart==='undefined'){ return; }
+  if(charts.donut) charts.donut.destroy();
   const total=ess+disc||1;
   charts.donut=new Chart(ctx,{type:'doughnut',data:{labels:['필수','선택'],datasets:[{data:[ess,disc],backgroundColor:['#1A56DB','#60A5FA'],borderWidth:0}]},
     options:{cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>`${c.label}: ${fmtWon(c.raw)} (${Math.round(c.raw/total*100)}%)`}}}}});
@@ -541,7 +619,9 @@ function drawDonut(ess,disc){
     <span style="display:flex;align-items:center;gap:5px;font-size:.76rem;color:var(--t2)"><span style="width:10px;height:10px;border-radius:3px;background:#60A5FA;display:inline-block"></span>선택</span>`;
 }
 function drawTrend(){
-  const ctx=document.getElementById('trendChart'); if(charts.trend) charts.trend.destroy();
+  const ctx=document.getElementById('trendChart');
+  if(!ctx || typeof Chart==='undefined'){ return; }
+  if(charts.trend) charts.trend.destroy();
   const labels=[],inc=[],exp=[];
   for(let i=5;i>=0;i--){ let y=parseInt(cur.year),m=cur.month-i; while(m<0){m+=12;y--;} const yd=state.years[String(y)];
     labels.push(`${String(y).slice(2)}.${m+1}`);
@@ -600,15 +680,112 @@ function renderEntry(){
   section('수입', yd.income);
 }
 
-/* ── 분석 ── */
+/* ── 분석 (기간 지정) ── */
+let rangeSel = null; // {sy,sm,ey,em}
+function allYearMonths(){
+  const out=[];
+  years().forEach(y=>{ for(let m=0;m<12;m++) out.push({y,m}); });
+  return out;
+}
+function ymKey(y,m){ return `${y}-${String(m+1).padStart(2,'0')}`; }
+function populateRangeSelects(){
+  const all=allYearMonths();
+  const opts=all.map(({y,m})=>`<option value="${ymKey(y,m)}">${y}년 ${MONTH_LABELS[m]}</option>`).join('');
+  document.getElementById('range-start').innerHTML=opts;
+  document.getElementById('range-end').innerHTML=opts;
+}
+function setRangePreset(monthsBack){
+  const ys=years(); const latestY=ys[ys.length-1]; const latestM=latestMonthWithData(latestY);
+  let ey=latestY, em=latestM, sy=parseInt(latestY), sm=latestM;
+  if(monthsBack==='all'){ sy=parseInt(ys[0]); sm=0; }
+  else{ let total=(sy*12+sm)-(monthsBack-1); sy=Math.floor(total/12); sm=((total%12)+12)%12; sy=String(sy); }
+  rangeSel={sy:String(sy),sm,ey:String(ey),em};
+  document.getElementById('range-start').value=ymKey(rangeSel.sy,rangeSel.sm);
+  document.getElementById('range-end').value=ymKey(rangeSel.ey,rangeSel.em);
+  renderRangeAnalysis();
+  document.querySelectorAll('#range-preset-chips .pbtn').forEach(b=>b.classList.remove('active'));
+  const idx={3:0,6:1,12:2,all:3}[monthsBack];
+  const btns=document.querySelectorAll('#range-preset-chips .pbtn');
+  if(btns[idx]) btns[idx].classList.add('active');
+}
+function applyCustomRange(){
+  const sv=document.getElementById('range-start').value, ev=document.getElementById('range-end').value;
+  const [sy,sm]=sv.split('-'); const [ey,em]=ev.split('-');
+  rangeSel={sy,sm:parseInt(sm)-1,ey,em:parseInt(em)-1};
+  document.querySelectorAll('#range-preset-chips .pbtn').forEach(b=>b.classList.remove('active'));
+  renderRangeAnalysis();
+}
+function rangeMonthList(){
+  let {sy,sm,ey,em}=rangeSel;
+  let a=parseInt(sy)*12+sm, b=parseInt(ey)*12+em;
+  if(a>b){ [a,b]=[b,a]; }
+  const out=[];
+  for(let k=a;k<=b;k++){ out.push({y:String(Math.floor(k/12)),m:((k%12)+12)%12}); }
+  return out;
+}
+function renderRangeAnalysis(){
+  if(!rangeSel) return;
+  const months=rangeMonthList();
+  let totInc=0, totExp=0;
+  const catTotals={};
+  const labels=[], incArr=[], expArr=[];
+  months.forEach(({y,m})=>{
+    const yd=state.years[y]; if(!yd) return;
+    const inc=sumMonth(yd.income,m), exp=sumMonth(yd.expenses,m);
+    totInc+=inc; totExp+=exp;
+    labels.push(`${String(y).slice(2)}.${m+1}`); incArr.push(inc); expArr.push(exp);
+    yd.expenses.forEach(it=>{ const v=Number(it.m[m])||0; if(v>0) catTotals[it.name]=(catTotals[it.name]||0)+v; });
+  });
+  const net=totInc-totExp;
+  document.getElementById('range-kpis').innerHTML=`
+    <div class="kpi"><div class="kpi-lbl">기간 총수입</div><div class="kpi-val">${fmtWon(totInc)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">기간 총지출</div><div class="kpi-val">${fmtWon(totExp)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">순저축</div><div class="kpi-val ${net>=0?'pos':'neg'}">${fmtWon(net)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">저축률</div><div class="kpi-val">${totInc>0?Math.round(net/totInc*100):0}%</div></div>`;
+  try{
+    const ctx=document.getElementById('rangeTrendChart');
+    if(ctx && typeof Chart!=='undefined'){
+      if(charts.rangeTrend) charts.rangeTrend.destroy();
+      charts.rangeTrend=new Chart(ctx,{type:'line',data:{labels,datasets:[
+        {label:'수입',data:incArr,borderColor:'#15803D',backgroundColor:'rgba(21,128,61,.1)',fill:true,tension:.3},
+        {label:'지출',data:expArr,borderColor:'#1A56DB',backgroundColor:'rgba(26,86,219,.12)',fill:true,tension:.3}
+      ]},options:{plugins:{legend:{labels:{color:'#4A5568',boxWidth:10}}},scales:{
+        x:{ticks:{color:'#94A3B8'},grid:{display:false}},y:{ticks:{color:'#94A3B8',callback:(v)=>(v/10000)+'만'},grid:{color:'#E4E8F0'}}}}});
+    }
+  }catch(e){ console.warn('rangeTrend 차트 오류:', e); }
+  try{
+    const ctx2=document.getElementById('rangeCatChart');
+    const top=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    if(ctx2 && typeof Chart!=='undefined'){
+      if(charts.rangeCat) charts.rangeCat.destroy();
+      charts.rangeCat=new Chart(ctx2,{type:'bar',data:{labels:top.map(t=>t[0]),datasets:[{data:top.map(t=>t[1]),backgroundColor:'#1A56DB'}]},
+        options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{
+          x:{ticks:{color:'#94A3B8',callback:(v)=>(v/10000)+'만'},grid:{color:'#E4E8F0'}},y:{ticks:{color:'#4A5568'},grid:{display:false}}}}});
+    }
+  }catch(e){ console.warn('rangeCat 차트 오류:', e); }
+}
+
 function renderAnalysis(){
+  populateRangeSelects();
+  if(!rangeSel){
+    document.getElementById('range-preset-chips').innerHTML=['최근 3개월','최근 6개월','최근 1년','전체'].map((l,i)=>
+      `<button class="pbtn" onclick="setRangePreset(${[3,6,12,"'all'"][i]})">${l}</button>`).join('');
+    setRangePreset(6);
+  } else {
+    renderRangeAnalysis();
+  }
   const ys=years(); const incArr=[],expArr=[],netArr=[];
   ys.forEach(y=>{ const yd=state.years[y]; const inc=sumYear(yd.income),exp=sumYear(yd.expenses); incArr.push(inc);expArr.push(exp);netArr.push(inc-exp); });
-  const ctx=document.getElementById('yearlyChart'); if(charts.yearly) charts.yearly.destroy();
-  charts.yearly=new Chart(ctx,{type:'bar',data:{labels:ys.map(y=>y+'년'),datasets:[
-    {label:'수입',data:incArr,backgroundColor:'#15803D'},{label:'지출',data:expArr,backgroundColor:'#1A56DB'}
-  ]},options:{plugins:{legend:{labels:{color:'#4A5568',boxWidth:10}}},scales:{
-    x:{ticks:{color:'#94A3B8'},grid:{display:false}},y:{ticks:{color:'#94A3B8',callback:(v)=>(v/10000)+'만'},grid:{color:'#E4E8F0'}}}}});
+  try{
+    const ctx=document.getElementById('yearlyChart');
+    if(ctx && typeof Chart!=='undefined'){
+      if(charts.yearly) charts.yearly.destroy();
+      charts.yearly=new Chart(ctx,{type:'bar',data:{labels:ys.map(y=>y+'년'),datasets:[
+        {label:'수입',data:incArr,backgroundColor:'#15803D'},{label:'지출',data:expArr,backgroundColor:'#1A56DB'}
+      ]},options:{plugins:{legend:{labels:{color:'#4A5568',boxWidth:10}}},scales:{
+        x:{ticks:{color:'#94A3B8'},grid:{display:false}},y:{ticks:{color:'#94A3B8',callback:(v)=>(v/10000)+'만'},grid:{color:'#E4E8F0'}}}}});
+    }
+  }catch(e){ console.warn('yearly 차트 오류:', e); }
   const tbl=document.getElementById('yearSummaryTable');
   tbl.innerHTML='<tr><th>연도</th><th style="text-align:right">수입-지출</th></tr>'+
     ys.map((y,i)=>`<tr><td>${y}년</td><td style="text-align:right" class="${netArr[i]>=0?'pos':'neg'} mono">${fmtWon(netArr[i])}</td></tr>`).join('');
@@ -749,6 +926,8 @@ _bhPush();
 window.addEventListener('popstate', function(){
   const appVisible=document.getElementById('app').style.display!=='none';
   const modalEl=document.getElementById('modal');
+  const periodEl=document.getElementById('periodModalBg');
+  if(periodEl && periodEl.classList.contains('open')){ closePeriodModal(); _bhPush(); return; }
   if(modalEl && modalEl.classList.contains('open')){ modalDone(false); _bhPush(); return; }
   if(appVisible && _bhCurrentTab()!=='dash'){ showTab('dash'); _bhPush(); return; }
   if(_bhExitArmed) return;
