@@ -32,8 +32,8 @@
   --sh2:0 4px 16px rgba(10,22,40,.1),0 1px 4px rgba(10,22,40,.06);
   --r:14px;--rs:8px;
 }
-html,body{overscroll-behavior-y:none;height:100%;}
-body{background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:15px;line-height:1.5;max-width:700px;margin:0 auto;min-height:100vh;padding-bottom:calc(4rem + env(safe-area-inset-bottom));word-break:keep-all;overscroll-behavior-y:none;}
+html,body{overscroll-behavior:none;height:100%;overflow-x:hidden;width:100%;}
+body{background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:15px;line-height:1.5;max-width:700px;margin:0 auto;min-height:100vh;padding-bottom:calc(4rem + env(safe-area-inset-bottom));word-break:keep-all;overscroll-behavior:none;overflow-x:hidden;position:relative;}
 input,select,button{font-family:inherit}
 
 .screen{display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:var(--bg);z-index:200;overflow-y:auto;padding:1.5rem}
