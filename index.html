@@ -695,12 +695,12 @@ function renderEntry(){
     items.forEach((it,idx)=>{
       const row=document.createElement('div'); row.className='ei-item';
       row.innerHTML=`<input class="ei-lbl" value="${it.name.replace(/"/g,'&quot;')}">
-        <input class="ei" inputmode="numeric" value="${Number(it.m[mi])||0}">
+        <input class="ei" inputmode="numeric" value="${(Number(it.m[mi])||0).toLocaleString('ko-KR')}">
         <button class="ei-del">✕</button>`;
       const nameInput=row.querySelector('.ei-lbl'), amtInput=row.querySelector('.ei');
       nameInput.onchange=()=>{ it.name=nameInput.value.trim()||it.name; saveLocal(); };
       amtInput.onfocus=()=>amtInput.select();
-      amtInput.onchange=()=>{ const v=parseInt(amtInput.value.replace(/[^0-9-]/g,''))||0; it.m[mi]=v; amtInput.value=v; saveLocal(); renderDash(); renderEntry(); };
+      amtInput.onchange=()=>{ const v=parseInt(amtInput.value.replace(/[^0-9-]/g,''))||0; it.m[mi]=v; amtInput.value=v.toLocaleString('ko-KR'); saveLocal(); renderDash(); renderEntry(); };
       row.querySelector('.ei-del').onclick=async()=>{ if(await customConfirm(`'${it.name}' 항목을 삭제할까요?`)){ items.splice(idx,1); saveLocal(); renderEntry(); renderDash(); } };
       box.appendChild(row);
     });
