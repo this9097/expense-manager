@@ -32,7 +32,8 @@
   --sh2:0 4px 16px rgba(10,22,40,.1),0 1px 4px rgba(10,22,40,.06);
   --r:14px;--rs:8px;
 }
-body{background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:15px;line-height:1.5;max-width:700px;margin:0 auto;min-height:100vh;padding-bottom:calc(4rem + env(safe-area-inset-bottom));word-break:keep-all}
+html,body{overscroll-behavior-y:contain;}
+body{background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:15px;line-height:1.5;max-width:700px;margin:0 auto;min-height:100vh;padding-bottom:calc(4rem + env(safe-area-inset-bottom));word-break:keep-all;overscroll-behavior-y:contain;}
 input,select,button{font-family:inherit}
 
 .screen{display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:var(--bg);z-index:200;overflow-y:auto;padding:1.5rem}
@@ -115,6 +116,8 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
 .ei-del:hover{color:var(--rd)}
 .ei-more{background:none;border:none;color:var(--t3);font-size:1.2rem;font-weight:700;padding:.2rem .55rem;cursor:pointer;flex-shrink:0;line-height:1}
 .ei-more:active{color:var(--bl)}
+.ei-memo{background:none;border:none;font-size:.95rem;padding:.2rem .3rem;cursor:pointer;flex-shrink:0;opacity:.35;line-height:1}
+.ei-memo.has{opacity:1}
 .ei-add{display:flex;gap:.5rem;padding:.6rem .75rem}
 .ei-add input{flex:1;background:var(--s2);border:1.5px dashed var(--bd2);border-radius:var(--rs);padding:.5rem .6rem;font-size:.85rem;color:var(--t)}
 .ei-add button{background:var(--bl);border:none;color:#fff;border-radius:var(--rs);padding:0 .9rem;font-size:.83rem;font-weight:700;cursor:pointer}
@@ -335,10 +338,23 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
     </div>
   </div>
 
+  <!-- 메모 입력 바텀시트 -->
+  <div class="dmodal-bg" id="memoModalBg">
+    <div class="dmodal">
+      <div class="year-label" id="memoModalTitle" style="margin-bottom:.7rem"></div>
+      <textarea class="textarea-full" id="memoModalInput" placeholder="예: 재산세 120만원 + 자동차세 30만원" style="min-height:110px"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-p" style="margin-top:0" onclick="saveMemoEditor()">저장</button>
+        <button class="btn btn-s" style="margin-top:0" onclick="closeMemoEditor()">취소</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 항목 상세 추이 모달 -->
   <div class="dmodal-bg" id="itemDetailModalBg">
     <div class="dmodal">
-      <div class="year-label" id="itemDetailTitle" style="margin-bottom:.9rem"></div>
+      <div class="year-label" id="itemDetailTitle" style="margin-bottom:.4rem"></div>
+      <div class="note" id="itemDetailNote" style="display:none;margin-bottom:.7rem"></div>
       <div style="position:relative;height:220px;margin-bottom:.9rem"><canvas id="itemDetailChart"></canvas></div>
       <div class="dtw" style="margin-bottom:.9rem"><table class="dt" id="itemDetailYearTable"></table></div>
       <button class="btn btn-s" onclick="closeItemDetail()">닫기</button>
@@ -740,6 +756,27 @@ function openItemActions(groupKey, items, idx){
   _bhPush();
 }
 function closeItemActions(){ document.getElementById('itemActionModalBg').classList.remove('open'); }
+
+/* 항목 메모 (특정 월의 상세 내역 메모) */
+let _memoTarget=null;
+function openMemoEditor(item, mi){
+  _memoTarget={item,mi};
+  document.getElementById('memoModalTitle').textContent = `${item.name} · ${cur.year}년 ${MONTH_LABELS[mi]} 메모`;
+  document.getElementById('memoModalInput').value = (item.memo && item.memo[mi]) || '';
+  document.getElementById('memoModalBg').classList.add('open');
+  _bhPush();
+}
+function closeMemoEditor(){ document.getElementById('memoModalBg').classList.remove('open'); _memoTarget=null; }
+function saveMemoEditor(){
+  if(!_memoTarget) return;
+  const { item, mi } = _memoTarget;
+  const text = document.getElementById('memoModalInput').value.trim();
+  pushUndo();
+  if(!item.memo) item.memo={};
+  if(text) item.memo[mi]=text; else delete item.memo[mi];
+  saveLocal(); closeMemoEditor(); renderEntry();
+  toast(text?'메모를 저장했습니다':'메모를 삭제했습니다');
+}
 function moveItemTo(fromKey, idx, toKey){
   const yd=yearData();
   const fromItems=SECTION_META[fromKey].arr(yd);
@@ -763,20 +800,31 @@ async function deleteItemConfirm(groupKey, idx){
 }
 
 /* 항목별 월별 추이 보기 */
+function findMatchingItems(all, name){
+  // 정확히 일치 우선, 없으면 이름이 서로 포함관계인 유사 항목까지 함께 찾는다 (연도별 이름 변경 대응)
+  const exact=all.filter(x=>x.name===name);
+  if(exact.length) return exact;
+  return all.filter(x=> x.name.includes(name) || name.includes(x.name));
+}
 function showItemDetail(name){
   document.getElementById('itemDetailTitle').textContent = name + ' 추이';
   document.getElementById('itemDetailModalBg').classList.add('open');
   _bhPush();
-  const ys=years(); const labels=[]; const values=[];
+  const ys=years(); const labels=[]; const values=[]; const matchedNames=new Set();
   ys.forEach(y=>{
     const yd=state.years[y];
     const all=[...yd.expenses, ...yd.investments, ...yd.income];
-    const it=all.find(x=>x.name===name);
+    const matches=findMatchingItems(all, name);
+    matches.forEach(m=>matchedNames.add(m.name));
     for(let mi=0; mi<12; mi++){
       labels.push(`${String(y).slice(2)}.${mi+1}`);
-      values.push(it ? (Number(it.m[mi])||0) : 0);
+      const sum=matches.reduce((a,it)=>a+(Number(it.m[mi])||0),0);
+      values.push(sum);
     }
   });
+  const noteEl=document.getElementById('itemDetailNote');
+  if(matchedNames.size>1){ noteEl.textContent='연도별로 이름이 조금씩 달랐던 유사 항목(' + [...matchedNames].join(', ') + ')을 함께 합산했습니다.'; noteEl.style.display='block'; }
+  else{ noteEl.style.display='none'; }
   setTimeout(()=>{
     try{
       const ctx=document.getElementById('itemDetailChart');
@@ -792,8 +840,8 @@ function showItemDetail(name){
   const tbl=document.getElementById('itemDetailYearTable');
   const rows=ys.map(y=>{
     const yd=state.years[y]; const all=[...yd.expenses, ...yd.investments, ...yd.income];
-    const it=all.find(x=>x.name===name);
-    const total=it? it.m.reduce((a,b)=>a+(Number(b)||0),0) : 0;
+    const matches=findMatchingItems(all, name);
+    const total=matches.reduce((a,it)=>a+it.m.reduce((x,v)=>x+(Number(v)||0),0),0);
     return `<tr><td>${y}년</td><td style="text-align:right" class="mono">${fmtWon(total)}</td></tr>`;
   }).join('');
   tbl.innerHTML='<tr><th>연도</th><th style="text-align:right">연간 합계</th></tr>'+rows;
@@ -828,14 +876,17 @@ function renderEntry(){
       <span style="font-size:1.05rem;font-weight:900;color:var(--t)">${title}</span><span class="mono" style="font-size:1.05rem;font-weight:900;color:var(--bl)">${fmtWon(total)}</span></div>`;
     items.forEach((it,idx)=>{
       const row=document.createElement('div'); row.className='ei-item';
+      const hasMemo = it.memo && it.memo[mi];
       row.innerHTML=`<input class="ei-lbl" value="${it.name.replace(/"/g,'&quot;')}">
         <input class="ei" inputmode="numeric" value="${(Number(it.m[mi])||0).toLocaleString('ko-KR')}">
+        <button class="ei-memo${hasMemo?' has':''}" title="메모">📝</button>
         <button class="ei-more">⋮</button>`;
       const nameInput=row.querySelector('.ei-lbl'), amtInput=row.querySelector('.ei');
       nameInput.onfocus=()=>{ pushUndo(); };
       nameInput.onchange=()=>{ it.name=nameInput.value.trim()||it.name; saveLocal(); };
       amtInput.onfocus=()=>{ pushUndo(); amtInput.select(); };
       amtInput.onchange=()=>{ const v=parseInt(amtInput.value.replace(/[^0-9-]/g,''))||0; it.m[mi]=v; amtInput.value=v.toLocaleString('ko-KR'); saveLocal(); renderDash(); renderEntry(); };
+      row.querySelector('.ei-memo').onclick=()=>openMemoEditor(it, mi);
       row.querySelector('.ei-more').onclick=()=>openItemActions(groupKey, items, idx);
       box.appendChild(row);
     });
@@ -1195,6 +1246,8 @@ window.addEventListener('popstate', function(){
   const periodEl=document.getElementById('periodModalBg');
   const itemActionEl=document.getElementById('itemActionModalBg');
   const itemDetailEl=document.getElementById('itemDetailModalBg');
+  const memoEl=document.getElementById('memoModalBg');
+  if(memoEl && memoEl.classList.contains('open')){ closeMemoEditor(); _bhPush(); return; }
   if(itemDetailEl && itemDetailEl.classList.contains('open')){ closeItemDetail(); _bhPush(); return; }
   if(itemActionEl && itemActionEl.classList.contains('open')){ closeItemActions(); _bhPush(); return; }
   if(periodEl && periodEl.classList.contains('open')){ closePeriodModal(); _bhPush(); return; }
@@ -1207,6 +1260,15 @@ window.addEventListener('popstate', function(){
 });
 
 window.addEventListener('DOMContentLoaded', boot);
+
+/* 당겨서 새로고침(pull-to-refresh) 방지: 스크롤이 맨 위에 있을 때 아래로 당기는 동작만 막는다 */
+let _ptrStartY=0;
+document.addEventListener('touchstart', (e)=>{ _ptrStartY = e.touches[0].clientY; }, {passive:true});
+document.addEventListener('touchmove', (e)=>{
+  const y = e.touches[0].clientY;
+  const scroller = document.scrollingElement || document.documentElement;
+  if(scroller.scrollTop <= 0 && y > _ptrStartY){ e.preventDefault(); }
+}, {passive:false});
 </script>
 
 </body>
