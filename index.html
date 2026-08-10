@@ -359,10 +359,10 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
     <div class="sl">복원 / 가져오기</div>
     <div class="card"><div class="cb">
       <input type="file" id="file-json" accept="application/json" style="display:none">
-      <input type="file" id="file-xlsx" accept=".xlsx" style="display:none">
+      <input type="file" id="file-xlsx" accept=".xlsx,.xls" style="display:none">
       <div class="iz" onclick="document.getElementById('file-json').click()" style="margin-bottom:.5rem">📥 JSON 백업 파일로 복원</div>
-      <div class="iz" onclick="document.getElementById('file-xlsx').click()">📂 Excel 파일에서 가져오기</div>
-      <div class="note" style="margin-top:.5rem">가져오기는 현재 데이터를 덮어씁니다</div>
+      <div class="iz" onclick="document.getElementById('file-xlsx').click()">📂 Excel/똑똑가계부 파일에서 가져오기</div>
+      <div class="note" style="margin-top:.5rem">똑똑가계부 등에서 내보낸 거래내역(.xls) 파일은 카테고리별로 자동 합산되어 반영됩니다. 자체 백업 형식(.xlsx)도 그대로 지원합니다.</div>
     </div></div>
 
     <div class="sl">기기 간 동기화 (Firebase)</div>
@@ -901,28 +901,103 @@ function bindEvents(){
     const file=e.target.files[0]; if(!file) return;
     const reader=new FileReader();
     reader.onload=()=>{ try{
-      const wb=XLSX.read(reader.result,{type:'binary'}); const newYears={};
-      wb.SheetNames.forEach(sheetName=>{
-        if(!/^\d{4}$/.test(sheetName)) return;
-        const ws=wb.Sheets[sheetName]; const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true});
-        const expenses=[],investments=[],income=[]; let section='expense';
-        rows.forEach(r=>{
-          const c0=r[0],c1=r[1],c2=r[2];
-          if(c0==='투자금'){ section='investment'; return; } if(c0==='수입'){ section='income'; return; }
-          if(!c2 || c2==='지출항목' || c2==='합계' || c2==='계') return;
-          const monthly=(r.slice(3,15)||[]).map(v=>Number(v)||0); while(monthly.length<12) monthly.push(0);
-          if(section==='expense'){ expenses.push({type:(c1==='필수'||c1==='선택')?c1:'선택',name:String(c2),m:monthly}); }
-          else if(section==='investment'){ investments.push({name:String(c2),m:monthly}); }
-          else{ income.push({name:String(c2),m:monthly}); }
-        });
-        newYears[sheetName]={expenses,investments,income};
-      });
-      if(Object.keys(newYears).length===0) throw new Error('연도 시트를 찾지 못했습니다');
-      state.years=Object.assign(state.years,newYears); saveLocal(); cur.year=years()[years().length-1]; cur.month=latestMonthWithData(cur.year); renderAll();
-      toast('Excel 데이터를 가져왔습니다');
+      const wb=XLSX.read(reader.result,{type:'binary'});
+      const isYearFormat = wb.SheetNames.some(sn=>/^\d{4}$/.test(sn));
+      if(isYearFormat){ importYearFormat(wb); }
+      else{ importDdokddokFormat(wb); }
     }catch(err){ alert('가져오기에 실패했습니다: '+err.message); } e.target.value=''; };
     reader.readAsBinaryString(file);
   };
+}
+
+function importYearFormat(wb){
+  const newYears={};
+  wb.SheetNames.forEach(sheetName=>{
+    if(!/^\d{4}$/.test(sheetName)) return;
+    const ws=wb.Sheets[sheetName]; const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true});
+    const expenses=[],investments=[],income=[]; let section='expense';
+    rows.forEach(r=>{
+      const c0=r[0],c1=r[1],c2=r[2];
+      if(c0==='투자금'){ section='investment'; return; } if(c0==='수입'){ section='income'; return; }
+      if(!c2 || c2==='지출항목' || c2==='합계' || c2==='계') return;
+      const monthly=(r.slice(3,15)||[]).map(v=>Number(v)||0); while(monthly.length<12) monthly.push(0);
+      if(section==='expense'){ expenses.push({type:(c1==='필수'||c1==='선택')?c1:'선택',name:String(c2),m:monthly}); }
+      else if(section==='investment'){ investments.push({name:String(c2),m:monthly}); }
+      else{ income.push({name:String(c2),m:monthly}); }
+    });
+    newYears[sheetName]={expenses,investments,income};
+  });
+  if(Object.keys(newYears).length===0) throw new Error('연도 시트를 찾지 못했습니다');
+  state.years=Object.assign(state.years,newYears); saveLocal(); cur.year=years()[years().length-1]; cur.month=latestMonthWithData(cur.year); renderAll();
+  toast('Excel 데이터를 가져왔습니다');
+}
+
+/* 똑똑가계부 등 거래내역(지출일/지출금액/카테고리) 형식 자동 인식 가져오기 */
+const CATEGORY_SYNONYMS={ '금융보험비':'금융보험료', '주유비':'기름값' };
+function ensureYearExists(y){
+  if(state.years[y]) return;
+  const latest=years()[years().length-1];
+  if(!latest){ state.years[y]={expenses:[],investments:[],income:[]}; return; }
+  const base=state.years[latest];
+  state.years[y]={
+    expenses:base.expenses.map(e=>({type:e.type,name:e.name,m:new Array(12).fill(0)})),
+    investments:base.investments.map(e=>({name:e.name,m:new Array(12).fill(0)})),
+    income:base.income.map(e=>({name:e.name,m:new Array(12).fill(0)}))
+  };
+}
+function importDdokddokFormat(wb){
+  let totalCategories=0, lastY=null, lastM=null;
+  const newlyCreated=[];
+  wb.SheetNames.forEach(sheetName=>{
+    const ws=wb.Sheets[sheetName];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true});
+    // 제목/부제 영역(상단 5줄)에서 "YYYY년 M월" 패턴 탐색
+    let y=null, m=null;
+    for(let i=0;i<Math.min(5,rows.length) && !y;i++){
+      for(const cell of (rows[i]||[])){
+        if(typeof cell==='string'){
+          const mt=cell.match(/(\d{4})\s*년\s*(\d{1,2})\s*월/);
+          if(mt){ y=mt[1]; m=parseInt(mt[2]); break; }
+        }
+      }
+    }
+    if(!y) return; // 이 시트는 거래내역 형식이 아님 (건너뜀)
+    // 헤더 행 탐색: '카테고리'와 '지출금액'을 포함하는 행
+    let headerIdx=-1, catCol=-1, amtCol=-1;
+    for(let i=0;i<Math.min(10,rows.length);i++){
+      const r=rows[i]||[];
+      const ci=r.indexOf('카테고리'), ai=r.indexOf('지출금액');
+      if(ci>=0 && ai>=0){ headerIdx=i; catCol=ci; amtCol=ai; break; }
+    }
+    if(headerIdx<0) return;
+    const sums={};
+    for(let i=headerIdx+1;i<rows.length;i++){
+      const r=rows[i]||[];
+      const cat=r[catCol]; const amt=Number(r[amtCol]);
+      if(!cat || !amt) continue;
+      sums[cat]=(sums[cat]||0)+amt;
+    }
+    ensureYearExists(y);
+    const yd=state.years[y]; const mi=m-1;
+    Object.entries(sums).forEach(([cat,total])=>{
+      const name=CATEGORY_SYNONYMS[cat]||cat;
+      let item=yd.expenses.find(it=>it.name===name);
+      if(!item && name==='투자'){
+        item=yd.investments.find(it=>it.name==='투자');
+        if(!item){ item={name:'투자',m:new Array(12).fill(0)}; yd.investments.push(item); newlyCreated.push('투자(투자/저축)'); }
+      }
+      if(!item){ item={type:'선택',name,m:new Array(12).fill(0)}; yd.expenses.push(item); newlyCreated.push(name); }
+      item.m[mi]=total;
+      totalCategories++;
+    });
+    lastY=y; lastM=mi;
+  });
+  if(totalCategories===0) throw new Error('거래내역 형식을 인식하지 못했습니다 (카테고리/지출금액 열을 찾을 수 없음)');
+  saveLocal();
+  if(lastY!==null){ cur.year=lastY; cur.month=lastM; }
+  renderAll();
+  const extra = newlyCreated.length ? ` (신규 항목 ${newlyCreated.length}개 추가됨)` : '';
+  toast(`거래내역 ${totalCategories}개 카테고리를 반영했습니다${extra}`);
 }
 
 /* ── Firebase 동기화 ── */
