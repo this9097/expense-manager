@@ -365,7 +365,7 @@ function renderYearChips(){
     const c=document.createElement('div');
     c.className='chip'+(y===cur.year?' active':'');
     c.textContent=y+'년';
-    c.onclick=()=>{ cur.year=y; renderAll(); };
+    c.onclick=()=>{ cur.year=y; cur.month=latestMonthWithData(y); renderAll(); };
     wrap.appendChild(c);
   });
 }
@@ -383,6 +383,18 @@ function renderMonthChips(containerId){
 
 /* ---------- 대시보드 ---------- */
 function yearData(){ return state.years[cur.year] || {expenses:[],investments:[],income:[]}; }
+
+function latestMonthWithData(y){
+  // 대출이자·보험료 등 고정성 항목은 미래월까지 미리 채워져 있어 판단 기준으로 부적합하므로,
+  // 실제 발생 시점에만 값이 생기는 '선택(변동)' 지출 항목을 기준으로 마지막 데이터 입력월을 찾는다.
+  const yd = state.years[y];
+  if(!yd) return new Date().getMonth();
+  const disc = yd.expenses.filter(e=>e.type==='선택');
+  for(let mi=11; mi>=0; mi--){
+    if(sumMonth(disc,mi) > 0) return mi;
+  }
+  return new Date().getMonth();
+}
 
 function renderDashboard(){
   const yd = yearData();
@@ -616,7 +628,7 @@ document.getElementById('file-json').onchange=(e)=>{
       if(!data.years) throw new Error('형식 오류');
       state = data;
       saveLocal();
-      cur.year = years()[years().length-1];
+      cur.year = years()[years().length-1]; cur.month = latestMonthWithData(cur.year);
       renderAll();
       toast('백업 파일로 복원했습니다');
     }catch(err){ alert('복원에 실패했습니다: 올바른 백업 JSON 파일인지 확인해 주세요.'); }
@@ -654,7 +666,7 @@ document.getElementById('file-xlsx').onchange=(e)=>{
       if(Object.keys(newYears).length===0) throw new Error('연도 시트를 찾지 못했습니다');
       state.years = Object.assign(state.years, newYears);
       saveLocal();
-      cur.year = years()[years().length-1];
+      cur.year = years()[years().length-1]; cur.month = latestMonthWithData(cur.year);
       renderAll();
       toast('Excel 데이터를 가져왔습니다');
     }catch(err){ alert('가져오기에 실패했습니다: '+err.message); }
@@ -787,6 +799,7 @@ function renderAll(){
   initLock();
   if(!loadLocal()){ seedFresh(); saveLocal(false); }
   cur.year = years()[years().length-1] || String(new Date().getFullYear());
+  cur.month = latestMonthWithData(cur.year);
   const savedFb = localStorage.getItem(LS_FB);
   if(savedFb){
     document.getElementById('firebase-config-input').value = savedFb;
