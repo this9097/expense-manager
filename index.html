@@ -308,7 +308,7 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
     <div class="card"><div class="cb"><div style="position:relative;height:210px"><canvas id="rangeTrendChart"></canvas></div></div></div>
 
     <div class="sl" style="display:flex;justify-content:space-between;align-items:center">
-      <span>월별 지출 합계 (탭하면 세부내역)</span>
+      <span>월별 증감 (수입 - 지출 · 탭하면 세부내역)</span>
       <span style="display:flex;align-items:center;gap:.5rem">
         <button class="year-nav-btn" onclick="monthlyGridNavYear(-1)">‹</button>
         <span id="monthlyGridYearLabel" style="font-size:.85rem;font-weight:800;color:var(--t)"></span>
@@ -1021,11 +1021,14 @@ function renderMonthlyGrid(){
   const yd=state.years[y];
   document.getElementById('rangeMonthlyList').innerHTML = MONTH_LABELS.map((label,mi)=>{
     const exp = yd ? sumMonth(yd.expenses, mi) : 0;
+    const inc = yd ? sumMonth(yd.income, mi) : 0;
+    const net = inc - exp;
     const isCur = y===cur.year && mi===cur.month;
-    const hasData = exp>0;
+    const hasData = exp>0 || inc>0;
+    const color = !hasData ? 'var(--t3)' : (net>=0 ? 'var(--gr)' : 'var(--rd)');
     return `<div class="month-card${isCur?' current':''}" onclick="showMonthExpenseList('${y}',${mi})">
       <div class="mc-name">${label}</div>
-      <div class="mc-total" style="font-size:.8rem;color:${hasData?'var(--t)':'var(--t3)'}">${fmtWon(exp)}</div>
+      <div class="mc-total" style="font-size:.8rem;color:${color}">${fmtWon(net)}</div>
     </div>`;
   }).join('');
 }
