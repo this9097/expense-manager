@@ -307,13 +307,11 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
     <div class="sl">기간 내 월별 수입/지출 추이</div>
     <div class="card"><div class="cb"><div style="position:relative;height:210px"><canvas id="rangeTrendChart"></canvas></div></div></div>
 
-    <div class="sl" style="display:flex;justify-content:space-between;align-items:center">
-      <span>월별 증감 (수입 - 지출 · 탭하면 세부내역)</span>
-      <span style="display:flex;align-items:center;gap:.5rem">
-        <button class="year-nav-btn" onclick="monthlyGridNavYear(-1)">‹</button>
-        <span id="monthlyGridYearLabel" style="font-size:.85rem;font-weight:800;color:var(--t)"></span>
-        <button class="year-nav-btn" onclick="monthlyGridNavYear(1)">›</button>
-      </span>
+    <div class="sl" style="margin-bottom:.4rem">월별 증감 (수입 - 지출 · 탭하면 세부내역)</div>
+    <div style="display:flex;justify-content:center;align-items:center;gap:.6rem;margin-bottom:.7rem">
+      <button class="year-nav-btn" onclick="monthlyGridNavYear(-1)">‹</button>
+      <span id="monthlyGridYearLabel" style="font-size:.95rem;font-weight:800;color:var(--t)"></span>
+      <button class="year-nav-btn" onclick="monthlyGridNavYear(1)">›</button>
     </div>
     <div class="month-grid" id="rangeMonthlyList" style="margin-bottom:.9rem"></div>
 
@@ -1017,11 +1015,12 @@ function monthlyGridNavYear(delta){
 }
 function renderMonthlyGrid(){
   const y=monthlyGridYear;
-  document.getElementById('monthlyGridYearLabel').textContent = y+'년';
   const yd=state.years[y];
-  document.getElementById('rangeMonthlyList').innerHTML = MONTH_LABELS.map((label,mi)=>{
+  let yearInc=0, yearExp=0;
+  const cardsHtml = MONTH_LABELS.map((label,mi)=>{
     const exp = yd ? sumMonth(yd.expenses, mi) : 0;
     const inc = yd ? sumMonth(yd.income, mi) : 0;
+    yearInc+=inc; yearExp+=exp;
     const net = inc - exp;
     const isCur = y===cur.year && mi===cur.month;
     const hasData = exp>0 || inc>0;
@@ -1031,6 +1030,9 @@ function renderMonthlyGrid(){
       <div class="mc-total" style="font-size:.8rem;color:${color}">${fmtWon(net)}</div>
     </div>`;
   }).join('');
+  const yearNet = yearInc - yearExp;
+  document.getElementById('monthlyGridYearLabel').innerHTML = `${y}년 <span style="color:${yearNet>=0?'var(--gr)':'var(--rd)'}">${fmtWon(yearNet)}</span>`;
+  document.getElementById('rangeMonthlyList').innerHTML = cardsHtml;
 }
 function allYearMonths(){
   const out=[];
