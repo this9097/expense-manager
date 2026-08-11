@@ -1237,14 +1237,19 @@ async function exportExcel(){
       const endRow = r-1;
       return {startRow, endRow};
     }
-    function subtotalRow(range, label){
+    function subtotalRow(items, label){
       const row = r;
+      const startRow = r - items.length;
+      const endRow = r - 1;
       ws.getCell(row,3).value = label||''; ws.getCell(row,3).font = {bold:true};
       for(let ci=4; ci<=16; ci++){
         const colLetter = COLS[ci-1];
         const c = ws.getCell(row,ci);
-        if(range.endRow>=range.startRow){
-          c.value = {formula:`SUM(${colLetter}${range.startRow}:${colLetter}${range.endRow})`, result:0};
+        let realResult;
+        if(ci<=15){ const mi=ci-4; realResult = items.reduce((a,it)=>a+(Number(it.m[mi])||0),0); }
+        else{ realResult = items.reduce((a,it)=>a+it.m.reduce((x,v)=>x+(Number(v)||0),0),0); }
+        if(endRow>=startRow){
+          c.value = {formula:`SUM(${colLetter}${startRow}:${colLetter}${endRow})`, result:realResult};
         } else { c.value = 0; }
         c.numFmt = numFmt; c.font = {bold:true};
         c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFF3F8FE'}};
@@ -1258,18 +1263,22 @@ async function exportExcel(){
     const essential = yd.expenses.filter(e=>e.type==='필수');
     const discretionary = yd.expenses.filter(e=>e.type==='선택');
     const essRange = itemRows(essential);
-    const essSubRow = subtotalRow(essRange);
+    const essSubRow = subtotalRow(essential);
     r++; // 빈 줄
     const discRange = itemRows(discretionary);
-    const discSubRow = subtotalRow(discRange);
+    const discSubRow = subtotalRow(discretionary);
 
-    // 지출 합계(필수+선택) 행: 두 소계 행을 더하는 수식
+    // 지출 합계(필수+선택) 행: 두 소계 행을 더하는 수식 (실제 계산값도 함께 채움)
     const expTotalRow = r;
     ws.getCell(expTotalRow,3).value='계'; ws.getCell(expTotalRow,3).font={bold:true};
+    const allExpense = essential.concat(discretionary);
     for(let ci=4; ci<=16; ci++){
       const colLetter=COLS[ci-1];
       const c = ws.getCell(expTotalRow,ci);
-      c.value = {formula:`${colLetter}${essSubRow}+${colLetter}${discSubRow}`, result:0};
+      let realResult;
+      if(ci<=15){ const mi=ci-4; realResult = allExpense.reduce((a,it)=>a+(Number(it.m[mi])||0),0); }
+      else{ realResult = allExpense.reduce((a,it)=>a+it.m.reduce((x,v)=>x+(Number(v)||0),0),0); }
+      c.value = {formula:`${colLetter}${essSubRow}+${colLetter}${discSubRow}`, result:realResult};
       c.numFmt=numFmt; c.font={bold:true};
       c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFDCEAFB'}};
       c.border=border;
@@ -1278,20 +1287,23 @@ async function exportExcel(){
 
     ws.getCell(`A${r}`).value = '투자금'; ws.getCell(`A${r}`).font={bold:true}; r++;
     const invRange = itemRows(yd.investments);
-    const invSubRow = subtotalRow(invRange);
+    const invSubRow = subtotalRow(yd.investments);
     r++;
 
     ws.getCell(`A${r}`).value = '수입'; ws.getCell(`A${r}`).font={bold:true}; r++;
     const incRange = itemRows(yd.income);
-    const incSubRow = subtotalRow(incRange, '계');
+    const incSubRow = subtotalRow(yd.income, '계');
 
-    // 수입 - 지출 행
+    // 수입 - 지출 행 (실제 계산값도 함께 채움)
     const diffRow = r;
     ws.getCell(diffRow,3).value='수입 - 지출'; ws.getCell(diffRow,3).font={bold:true};
     for(let ci=4; ci<=16; ci++){
       const colLetter=COLS[ci-1];
       const c = ws.getCell(diffRow,ci);
-      c.value = {formula:`${colLetter}${incSubRow}-${colLetter}${expTotalRow}`, result:0};
+      let incResult, expResult;
+      if(ci<=15){ const mi=ci-4; incResult=yd.income.reduce((a,it)=>a+(Number(it.m[mi])||0),0); expResult=allExpense.reduce((a,it)=>a+(Number(it.m[mi])||0),0); }
+      else{ incResult=yd.income.reduce((a,it)=>a+it.m.reduce((x,v)=>x+(Number(v)||0),0),0); expResult=allExpense.reduce((a,it)=>a+it.m.reduce((x,v)=>x+(Number(v)||0),0),0); }
+      c.value = {formula:`${colLetter}${incSubRow}-${colLetter}${expTotalRow}`, result:incResult-expResult};
       c.numFmt=numFmt; c.font={bold:true};
       c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF6E5'}};
       c.border=border;
@@ -1435,6 +1447,20 @@ async function connectFirebaseSilent(configStr,silent){
     if(!fb.app){ fb.app=firebase.initializeApp(config,'expenseApp'); }
     fb.db=fb.app.firestore();
     const docRef=fb.db.collection('expenseApp').doc('main');
+
+    // 최초 연결 시: 원격에 이미 데이터가 있으면 무조건 그걸 받아온다 (내 로컬의 새 seed값으로 덮어쓰지 않는다).
+    // 원격이 비어있을 때만 지금 내 로컬 데이터를 최초 값으로 올린다.
+    const snap = await docRef.get();
+    if(snap.exists && snap.data() && snap.data().payload){
+      try{
+        state = JSON.parse(snap.data().payload);
+        localStorage.setItem(LS_KEY, JSON.stringify(state));
+        renderAll();
+      }catch(e){}
+    } else {
+      pushToFirebase();
+    }
+
     fb.unsub=docRef.onSnapshot(snap=>{
       if(!snap.exists) return; const remote=snap.data(); if(!remote||!remote.payload) return;
       if((remote.updatedAt||0) <= (state.updatedAt||0)) return;
@@ -1442,7 +1468,6 @@ async function connectFirebaseSilent(configStr,silent){
     });
     fb.connected=true; localStorage.setItem(LS_FB, configStr); updateSyncUI();
     if(silent!==true) toast('동기화가 연결되었습니다');
-    pushToFirebase();
   }catch(e){ if(silent!==true) alert('연결에 실패했습니다: firebaseConfig 형식을 확인해 주세요.'); }
 }
 function pushToFirebase(){
