@@ -728,7 +728,7 @@ function initApp(){
   cur.year = years()[years().length-1] || String(new Date().getFullYear());
   cur.month = latestMonthWithData(cur.year);
   const savedFb = localStorage.getItem(LS_FB);
-  if(savedFb){ document.getElementById('firebase-config-input').value=savedFb; connectFirebaseSilent(savedFb); }
+  if(savedFb){ document.getElementById('firebase-config-input').value=savedFb; connectFirebaseSilent(savedFb,true); }
   updateSyncUI();
   renderAll();
   bindEvents();
@@ -1556,7 +1556,7 @@ async function connectFirebaseSilent(configStr,silent){
     });
     fb.connected=true; localStorage.setItem(LS_FB, configStr); updateSyncUI();
     if(silent!==true) toast('동기화가 연결되었습니다');
-  }catch(e){ if(silent!==true) alert('연결에 실패했습니다: firebaseConfig 형식을 확인해 주세요.'); }
+  }catch(e){ console.warn('Firebase 동기화 연결 실패:', e); if(silent!==true) alert('연결에 실패했습니다: firebaseConfig 형식을 확인해 주세요.'); }
 }
 function pushToFirebase(){
   if(!fb.connected || !fb.db) return;
