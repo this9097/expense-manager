@@ -224,6 +224,7 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
       <button class="pb sym" onclick="loginClear()">C</button><button class="pb" onclick="lpi('0')">0</button><button class="pb sym" onclick="loginDel()">⌫</button>
     </div>
     <p class="pin-msg" id="loginMsg"></p>
+    <button class="btn btn-s" id="fpLoginBtn" onclick="loginWithFingerprint()" style="display:none;margin-top:.6rem">👆 지문/Face ID로 로그인</button>
     <p class="kbd">숫자키 · Backspace · Esc 사용 가능</p>
     <p class="kbd" style="margin-top:.7rem"><a href="javascript:void(0)" onclick="forgotPinReset()" style="color:var(--bl);text-decoration:underline">비밀번호를 잊으셨으면 여기를 눌러 초기화</a></p>
   </div>
@@ -396,6 +397,13 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
       <button class="btn btn-p" onclick="changePin()">변경</button>
     </div></div>
 
+    <div class="sl">생체 인증 (지문 · Face ID)</div>
+    <div class="card"><div class="cb">
+      <div class="set-sub" id="fpStatus" style="margin-bottom:.7rem">확인 중...</div>
+      <button class="btn btn-p" id="fpRegisterBtn" onclick="registerFingerprint()" style="display:none">👆 이 기기에 지문/Face ID 등록</button>
+      <button class="btn btn-d" id="fpRemoveBtn" onclick="removeFingerprint()" style="display:none">등록 해제</button>
+    </div></div>
+
     <div class="sl">데이터 백업 / 내보내기</div>
     <div class="card"><div class="cb">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.45rem">
@@ -526,7 +534,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 /* ══════════════ 지출관리 (심상현) ══════════════ */
 const SEED_DATA = {"2024":{"expenses":[{"type":"필수","name":"주거생활비","m":[895470,683320,619170,598840,459800,438110,430910,514800,958010,619820,497070,650000]},{"type":"필수","name":"대출이자","m":[582675,582675,582675,582675,582675,582675,582675,582675,582675,582675,582675,582675]},{"type":"필수","name":"금융보험료","m":[404889,495889,495889,495889,1792819,480649,2404769,480649,495889,480649,480649,480649]},{"type":"필수","name":"통신비","m":[153850,153850,153850,153850,153070,147880,148520,116590,96120,89600,89590,90000]},{"type":"필수","name":"세금","m":[582850,0,0,0,3479730,944130,2037110,11700,2950990,1614250,0,0]},{"type":"필수","name":"기부금","m":[50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]},{"type":"필수","name":"용돈","m":[800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000]},{"type":"선택","name":"의류미용비","m":[18000,18000,18000,18000,18000,18000,18000,18000,18000,18000,18000,18000]},{"type":"선택","name":"인터넷 쇼핑","m":[891422,932518,143252,394125,469786,529694,1237203,370492,242667,144585,66707,200000]},{"type":"선택","name":"외식","m":[45260,105000,97000,100000,277900,229500,103000,708700,887000,919000,1220600,600000]},{"type":"선택","name":"식비","m":[565170,734760,471230,431620,504710,271430,593580,426820,923980,375600,530280,300000]},{"type":"선택","name":"대리운전","m":[20000,20000,134300,46400,20000,117300,20000,20000,20000,20000,35000,55000]},{"type":"선택","name":"골프","m":[0,200000,0,400000,1198200,160800,0,0,177000,80000,720000,180500]},{"type":"선택","name":"여행","m":[0,0,0,0,0,5820000,866510,1513499,0,0,0,0]},{"type":"선택","name":"문화생활비","m":[49500,8320,25000,9000,16000,0,0,0,0,0,0,0]},{"type":"선택","name":"학비","m":[320000,320000,320000,320000,320000,320000,320000,320000,320000,320000,320000,450000]},{"type":"선택","name":"사회생활비","m":[100000,0,0,0,0,50000,0,0,0,0,0,0]},{"type":"선택","name":"차량 유지비","m":[198000,0,200000,0,166780,7800,0,3200,0,0,0,148000]},{"type":"선택","name":"교통비","m":[0,0,0,10500,0,0,0,0,0,0,0,0]},{"type":"선택","name":"하이패스","m":[124950,138170,118590,193210,171850,156810,229170,160700,116830,111950,137290,0]},{"type":"선택","name":"범칙금","m":[0,0,0,0,0,0,70000,0,110000,0,0,0]},{"type":"선택","name":"건강관리비","m":[28100,26560,231000,972490,370000,29640,0,40000,0,21500,410110,29400]}],"investments":[],"income":[]},"2025":{"expenses":[{"type":"필수","name":"주거생활비","m":[756110,710990,720640,688930,565180,535560,538640,595420,618230,485730,413900,514690]},{"type":"필수","name":"대출이자","m":[582675,582675,582675,582675,582675,582675,582675,582675,582675,582675,582675,582675]},{"type":"필수","name":"금융보험료","m":[404889,480649,480649,508955,2229380,1039310,452975,344058,349658,378708,365658,365658]},{"type":"필수","name":"통신비","m":[192410,89590,89600,52940,52500,303130,196140,196180,192240,145647,829870,239910]},{"type":"필수","name":"세금","m":[1557760,0,0,591000,14201690,0,5081370,966200,1242350,0,5277720,0]},{"type":"필수","name":"기부금","m":[50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]},{"type":"필수","name":"부모님 용돈","m":[800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000]},{"type":"필수","name":"생활비","m":[2800000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000]},{"type":"필수","name":"수연이 용돈","m":[0,0,0,200000,783000,13200000,900000,507800,230600,800000,200000,200000]},{"type":"선택","name":"쇼핑+아루관련","m":[746007,396806,790455,428129,2002326,3658789,1558265,1178801,1603261,1306755,512920,1209370]},{"type":"선택","name":"외식","m":[912450,672300,1038190,1188714,1561376,1397730,1043940,852280,1330935,1275643,608310,696800]},{"type":"선택","name":"기름값","m":[181000,217000,87000,254000,0,98000,96000,0,186000,244048,228000,103000]},{"type":"선택","name":"교통비","m":[16900,4600,32850,12400,37300,11400,18200,27100,60800,13000,14600,21100]},{"type":"선택","name":"하이패스","m":[50150,35870,74660,88740,72040,52930,46020,66300,60260,65460,91840,97850]},{"type":"선택","name":"대리운전","m":[35000,62000,21000,0,0,52700,43000,16000,94000,0,37000,73000]},{"type":"선택","name":"차량 유지비","m":[0,14100,0,115540,2000,15100,0,0,9600,18350,450000,8200]},{"type":"선택","name":"골프","m":[915750,0,124000,225800,418000,210000,437000,219500,381000,111000,620000,132000]},{"type":"선택","name":"여행","m":[4147000,148119,342350,0,0,740278,790000,0,280230,257211,0,0]},{"type":"선택","name":"문화생활비","m":[0,0,0,0,0,9900,9900,9900,53500,19900,9900,9900]},{"type":"선택","name":"사회생활비","m":[300000,0,200000,0,0,0,0,0,0,0,0,100000]},{"type":"선택","name":"의류미용비","m":[18000,5000,8000,16000,8000,53000,18000,16000,8000,10000,8000,16000]},{"type":"선택","name":"수연이 학원비","m":[376041,1545600,34160,0,450000,13950,921900,0,0,591100,520000,520000]},{"type":"선택","name":"건강관리비","m":[0,0,0,10200,417700,1000000,0,38600,141400,45400,0,780490]},{"type":"선택","name":"범칙금","m":[0,0,0,0,0,0,42160,0,0,0,0,0]}],"investments":[{"name":"중계형 ISA","m":[40000000,0,0,0,0,0,1000000,0,0,0,0,0]},{"name":"개인형 IRP","m":[250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000]},{"name":"퇴직연금 펀드","m":[750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000]},{"name":"노란우산","m":[1000000,1000000,1000000,1000000,1000000,1000000,1000000,200000,200000,200000,200000,200000]},{"name":"중계형 ISA (이정숙)","m":[1000000,0,0,4500000,0,0,1000000,0,0,0,0,0]}],"income":[{"name":"SK","m":[1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000]},{"name":"롯데","m":[1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000,1900000]},{"name":"오피스텔","m":[450000,450000,450000,450000,450000,0,0,250000,250000,250000,250000,250000]},{"name":"배당금 (세후)","m":[3290000,3430000,4140000,3390000,5170000,4873767,3760000,3690000,4490000,3050000,2310000,2990000]},{"name":"매직 스플릿 (미국)","m":[0,0,2584581.5,3449160,8401440,8195360,8923080,6025650,6566000,9711380,0,-8208450]},{"name":"매직 스플릿 (국내)","m":[27346,382644,899611,962859,-2729992,890472,441839,38540,588522,1019350,346882,200000]},{"name":"기타수입","m":[0,528000,2248000,1848000,1848000,1848000,1848000,1848000,1848000,1848000,2508000,0]},{"name":"비젼","m":[2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000,2400000]},{"name":"진영","m":[2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000,2700000]}]},"2026":{"expenses":[{"type":"필수","name":"주거생활비","m":[660950,703930,612270,621260,499140,453880,0,0,0,0,0,0]},{"type":"필수","name":"대출이자","m":[582675,582675,582675,582675,582675,582675,713101,713101,713101,713101,713101,713101]},{"type":"필수","name":"금융보험료","m":[411948,365658,365658,365358,365358,3253088,0,0,0,0,0,0]},{"type":"필수","name":"통신비","m":[219600,215260,240040,191550,179870,186200,0,0,0,0,0,0]},{"type":"필수","name":"세금","m":[1497930,0,0,587000,16907850,0,0,0,0,0,0,0]},{"type":"필수","name":"건강보험","m":[0,0,0,650000,650000,500000,500000,500000,500000,500000,500000,500000]},{"type":"필수","name":"기부금","m":[50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000]},{"type":"필수","name":"부모님 용돈","m":[800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000,800000]},{"type":"필수","name":"생활비","m":[3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000,3000000]},{"type":"필수","name":"수연이 용돈","m":[250000,250000,250000,250000,250000,672900,250000,250000,250000,250000,250000,250000]},{"type":"선택","name":"쇼핑","m":[2426680,1458933,1164460,503496,1063797,8383800,0,0,0,0,0,0]},{"type":"선택","name":"외식","m":[606690,761030,585122,1206886,1449890,981050,0,0,0,0,0,0]},{"type":"선택","name":"구독","m":[0,0,0,0,0,0,0,0,0,0,0,0]},{"type":"선택","name":"기름값","m":[234000,109000,101000,264000,182000,127000,0,0,0,0,0,0]},{"type":"선택","name":"교통비","m":[0,10800,10900,33200,44800,34900,0,0,0,0,0,0]},{"type":"선택","name":"하이패스","m":[88250,71050,70920,61710,78380,51550,0,0,0,0,0,0]},{"type":"선택","name":"대리운전","m":[0,19000,44000,72000,0,43000,0,0,0,0,0,0]},{"type":"선택","name":"차량 유지비","m":[0,0,15000,4100,67850,960000,0,0,0,0,0,0]},{"type":"선택","name":"골프","m":[161800,937750,221000,416000,0,1218600,0,0,0,0,0,0]},{"type":"선택","name":"여행","m":[1956049,1101347,4611458,0,0,0,0,0,0,0,0,0]},{"type":"선택","name":"문화생활비","m":[39900,9900,0,20000,10000,0,0,0,0,0,0,0]},{"type":"선택","name":"수연이 학원비","m":[551500,0,972100,0,640000,0,0,0,0,0,0,0]},{"type":"선택","name":"사회생활비","m":[0,0,0,0,100000,40000,0,0,0,0,0,0]},{"type":"선택","name":"의류미용비","m":[8000,12000,12000,24000,24000,12000,0,0,0,0,0,0]},{"type":"선택","name":"범칙금","m":[0,0,0,0,0,0,0,0,0,0,0,0]},{"type":"선택","name":"건강관리비","m":[23400,137090,862700,0,0,0,0,0,0,0,0,0]}],"investments":[{"name":"중계형 ISA","m":[0,10000000,0,0,0,5000000,2000000,0,0,0,0,0]},{"name":"개인형 IRP","m":[250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000]},{"name":"퇴직연금 펀드","m":[750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000]},{"name":"노란우산","m":[200000,200000,200000,200000,200000,200000,200000,200000,200000,200000,200000,200000]},{"name":"중계형 ISA (이정숙)","m":[10000000,0,1250000,0,12750000,3000000,0,0,0,0,0,0]}],"income":[{"name":"SK","m":[1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000,1500000]},{"name":"롯데","m":[1900000,1900000,1800000,1800000,1800000,1800000,1800000,1800000,1800000,1800000,1800000,1800000]},{"name":"오피스텔","m":[250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000]},{"name":"배당금","m":[2598601,2067208,2889501,4170699,4428407,2858747,3700000,3370000,3500000,3380000,3400000,4140000]},{"name":"매직 스플릿 (미국)","m":[7149123.5,-5250450,-5103000,2656878,592500,0,0,0,0,0,0,0]},{"name":"매직 스플릿 (국내)","m":[2443106,1342823,6820162,863174,0,231174,0,0,0,0,0,0]}]}};
 const MONTH_LABELS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-const LS_KEY='exp_data_v1', LS_PIN='exp_pin', LS_FB='exp_fb_config', LS_THEME='exp_theme';
+const LS_KEY='exp_data_v1', LS_PIN='exp_pin', LS_FB='exp_fb_config', LS_THEME='exp_theme', LS_WEBAUTHN='exp_webauthn_cred_id';
 
 /* ── 테마 프리셋 ── */
 const THEME_PRESETS=[
@@ -619,6 +627,74 @@ function forgotPinReset(){
   localStorage.removeItem(LS_PIN);
   location.reload();
 }
+/* ── 지문/Face ID (WebAuthn) ──
+   서버가 없는 순수 클라이언트 앱이므로, 이 기기의 플랫폼 인증기(지문·Face ID)를
+   통과했는지만 확인하는 방식으로 동작한다. 자격증명 ID는 이 브라우저(기기)에만
+   저장되며, 기기를 바꾸면 새로 등록해야 한다. */
+function b64uEnc(buf){return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function b64uDec(str){str=str.replace(/-/g,'+').replace(/_/g,'/');while(str.length%4)str+='=';const bin=atob(str);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);return buf.buffer;}
+async function fpAvailable(){
+  if(!window.PublicKeyCredential||!navigator.credentials)return false;
+  try{return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch(e){return false;}
+}
+async function refreshFpUI(){
+  const avail=await fpAvailable();
+  const regBtn=document.getElementById('fpRegisterBtn'),rmBtn=document.getElementById('fpRemoveBtn'),st=document.getElementById('fpStatus');
+  const loginBtn=document.getElementById('fpLoginBtn');
+  const hasCred=!!localStorage.getItem(LS_WEBAUTHN);
+  if(loginBtn)loginBtn.style.display=(avail&&hasCred)?'block':'none';
+  if(!st)return;
+  if(!avail){st.textContent='이 기기/브라우저에서는 지문·Face ID 인증을 지원하지 않습니다.';regBtn.style.display='none';rmBtn.style.display='none';return;}
+  if(hasCred){st.textContent='✓ 이 기기에 지문/Face ID가 등록되어 있습니다.';regBtn.style.display='none';rmBtn.style.display='block';}
+  else{st.textContent='등록하면 다음부터 비밀번호 대신 지문/Face ID로 잠금을 해제할 수 있습니다.';regBtn.style.display='block';rmBtn.style.display='none';}
+}
+async function registerFingerprint(){
+  if(!await fpAvailable()){toast('이 기기에서는 지원되지 않습니다');return;}
+  try{
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    const userId=crypto.getRandomValues(new Uint8Array(16));
+    const cred=await navigator.credentials.create({publicKey:{
+      challenge,
+      rp:{name:'지출관리'},
+      user:{id:userId,name:'심상현',displayName:'심상현'},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',requireResidentKey:false},
+      timeout:60000,
+      attestation:'none'
+    }});
+    if(!cred){toast('등록이 취소되었습니다');return;}
+    localStorage.setItem(LS_WEBAUTHN,b64uEnc(cred.rawId));
+    toast('✓ 지문/Face ID 등록 완료');
+    refreshFpUI();
+  }catch(e){toast('등록 실패: '+(e.message||'취소되었거나 지원되지 않습니다'));}
+}
+function removeFingerprint(){
+  localStorage.removeItem(LS_WEBAUTHN);
+  toast('지문/Face ID 등록이 해제되었습니다');
+  refreshFpUI();
+}
+async function loginWithFingerprint(isAuto){
+  const credIdB64=localStorage.getItem(LS_WEBAUTHN);
+  if(!credIdB64)return;
+  try{
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    const assertion=await navigator.credentials.get({publicKey:{
+      challenge,
+      allowCredentials:[{id:b64uDec(credIdB64),type:'public-key'}],
+      userVerification:'required',
+      timeout:60000
+    }});
+    if(assertion)enterApp();
+  }catch(e){
+    setLoginMsg(isAuto?'비밀번호를 입력해주세요':'지문/Face ID 인증에 실패했습니다 — 비밀번호를 입력하세요',isAuto?'info':'err');
+  }
+}
+async function autoFpLogin(){
+  if(!localStorage.getItem(LS_WEBAUTHN))return;
+  if(!await fpAvailable())return;
+  setLoginMsg('지문/Face ID로 인증해주세요...','info');
+  setTimeout(()=>{loginWithFingerprint(true);},300);
+}
 document.addEventListener('keydown',e=>{
   const su=document.getElementById('setupScreen').classList.contains('show');
   const li=document.getElementById('loginScreen').classList.contains('show');
@@ -636,7 +712,8 @@ function showScreen(name){
 }
 function boot(){
   const lp=localStorage.getItem(LS_PIN);
-  if(lp){ showScreen('login'); document.getElementById('loginSub').textContent='6자리 비밀번호를 입력하세요'; }
+  refreshFpUI();
+  if(lp){ showScreen('login'); document.getElementById('loginSub').textContent='6자리 비밀번호를 입력하세요'; autoFpLogin(); }
   else{ showScreen('setup'); }
 }
 function enterApp(){ showScreen('app'); initApp(); }
@@ -710,7 +787,7 @@ function showTab(name){
   document.querySelectorAll('nav button')[idx].classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
   if(name==='analysis') renderAnalysis();
-  if(name==='settings') renderThemeSwatches(localStorage.getItem(LS_THEME)||'default');
+  if(name==='settings'){ renderThemeSwatches(localStorage.getItem(LS_THEME)||'default'); refreshFpUI(); }
   _bhPush();
 }
 
