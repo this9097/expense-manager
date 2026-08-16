@@ -1524,6 +1524,24 @@ function updateSyncUI(){
   const status=document.getElementById('firebase-status');
   status.textContent = fb.connected ? '현재: Firebase와 동기화 중입니다' : '현재: 로컬 저장만 사용 중입니다';
 }
+/* Firebase 콘솔에서 복사한 값은 순수 JSON이 아니라
+   `const firebaseConfig = { apiKey: "...", ... };` 같은 JS 코드 형태인 경우가 대부분이라,
+   JSON.parse만으로는 항상 실패한다. { ... } 객체 부분만 추출해 JS 객체 리터럴로 안전하게 해석한다. */
+function parseFirebaseConfigInput(raw){
+  const s=(raw||'').trim();
+  try{ return JSON.parse(s); }catch(e){}
+  const start=s.indexOf('{');
+  if(start===-1) throw new Error('config 객체({...})를 찾을 수 없습니다');
+  let depth=0, end=-1;
+  for(let i=start;i<s.length;i++){
+    if(s[i]==='{') depth++;
+    else if(s[i]==='}'){ depth--; if(depth===0){ end=i; break; } }
+  }
+  if(end===-1) throw new Error('config 객체의 중괄호가 맞지 않습니다');
+  const objStr=s.slice(start,end+1);
+  // eslint-disable-next-line no-new-func
+  return Function('"use strict"; return (' + objStr + ');')();
+}
 async function connectFirebase(){
   const v=document.getElementById('firebase-config-input').value.trim();
   if(!v){ toast('firebaseConfig를 붙여넣어 주세요'); return; }
@@ -1531,7 +1549,7 @@ async function connectFirebase(){
 }
 async function connectFirebaseSilent(configStr,silent){
   try{
-    const config=JSON.parse(configStr);
+    const config=parseFirebaseConfigInput(configStr);
     if(!fb.app){ fb.app=firebase.initializeApp(config,'expenseApp'); }
     fb.db=fb.app.firestore();
     const docRef=fb.db.collection('expenseApp').doc('main');
@@ -1554,9 +1572,9 @@ async function connectFirebaseSilent(configStr,silent){
       if((remote.updatedAt||0) <= (state.updatedAt||0)) return;
       try{ state=JSON.parse(remote.payload); localStorage.setItem(LS_KEY, JSON.stringify(state)); renderAll(); if(silent!==true) toast('다른 기기의 변경사항을 반영했습니다'); }catch(e){}
     });
-    fb.connected=true; localStorage.setItem(LS_FB, configStr); updateSyncUI();
+    fb.connected=true; localStorage.setItem(LS_FB, JSON.stringify(config)); updateSyncUI();
     if(silent!==true) toast('동기화가 연결되었습니다');
-  }catch(e){ console.warn('Firebase 동기화 연결 실패:', e); if(silent!==true) alert('연결에 실패했습니다: firebaseConfig 형식을 확인해 주세요.'); }
+  }catch(e){ console.warn('Firebase 동기화 연결 실패:', e); if(silent!==true) alert('연결에 실패했습니다: '+(e && e.message?e.message:'firebaseConfig 형식을 확인해 주세요.')); }
 }
 function pushToFirebase(){
   if(!fb.connected || !fb.db) return;
