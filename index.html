@@ -1530,7 +1530,11 @@ function updateSyncUI(){
 function parseFirebaseConfigInput(raw){
   const s=(raw||'').trim();
   try{ return JSON.parse(s); }catch(e){}
-  const start=s.indexOf('{');
+  // 콘솔 원문에는 import 구문 등 다른 중괄호도 섞여 있을 수 있어,
+  // apiKey가 들어있는 진짜 config 객체를 기준으로 그 객체의 시작 '{'를 찾는다.
+  let anchor=s.indexOf('apiKey');
+  if(anchor===-1) anchor=s.indexOf('{');
+  const start=s.lastIndexOf('{', anchor);
   if(start===-1) throw new Error('config 객체({...})를 찾을 수 없습니다');
   let depth=0, end=-1;
   for(let i=start;i<s.length;i++){
