@@ -985,7 +985,7 @@ function yearGridSectionHtml(groupKey, yd){
       return `<td style="padding:0;${B}"><input class="ygrid-cell" data-group="${groupKey}" data-idx="${idx}" data-mi="${mi}" inputmode="numeric" value="${v.toLocaleString('ko-KR')}" style="display:block;box-sizing:border-box;width:96px;text-align:right;border:none;padding:.3rem .4rem;font-size:.75rem;font-family:'SF Mono',Consolas,monospace;background:transparent"></td>`;
     }).join('');
     const yearTotal=it.m.reduce((a,v)=>a+(Number(v)||0),0);
-    return `<tr><td style="position:sticky;left:0;background:var(--s);white-space:nowrap;padding:.3rem .5rem;font-size:.8rem;font-weight:600;${B}">${it.name}</td>${cells}<td style="text-align:right;font-weight:900;font-size:.82rem;padding:.3rem .5rem;white-space:nowrap;background:var(--bl-l);color:var(--bl);${B}" class="mono">${fmtWon(yearTotal)}</td></tr>`;
+    return `<tr><td style="position:sticky;left:0;background:var(--s);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;width:130px;max-width:130px;padding:.3rem .5rem;font-size:.8rem;font-weight:600;${B}">${it.name}</td>${cells}<td style="text-align:right;font-weight:900;font-size:.82rem;padding:.3rem .5rem;white-space:nowrap;background:var(--bl-l);color:var(--bl);${B}" class="mono">${fmtWon(yearTotal)}</td></tr>`;
   }).join('');
   const totalCells=monthTotals.map(v=>`<td style="text-align:right;padding:.3rem .35rem;font-size:.78rem;font-weight:900;white-space:nowrap;background:var(--bl-l);color:var(--bl);${B}" class="mono">${fmtWon(v)}</td>`).join('');
   const yearSum=monthTotals.reduce((a,b)=>a+b,0);
@@ -994,13 +994,13 @@ function yearGridSectionHtml(groupKey, yd){
     <div style="overflow-x:auto">
     <table style="border-collapse:collapse">
       <tr>
-        <th style="position:sticky;left:0;background:var(--s2);text-align:left;padding:.3rem .5rem;white-space:nowrap;font-size:.68rem;color:var(--t3);${B}">항목</th>
+        <th style="position:sticky;left:0;background:var(--s2);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;width:130px;max-width:130px;padding:.3rem .5rem;font-size:.68rem;color:var(--t3);${B}">항목</th>
         ${MONTH_LABELS.map(l=>`<th style="width:96px;box-sizing:border-box;padding:.3rem .35rem;white-space:nowrap;font-weight:700;color:var(--t3);font-size:.66rem;text-align:center;background:var(--s2);${B}">${l}</th>`).join('')}
         <th style="padding:.3rem .5rem;white-space:nowrap;font-size:.7rem;color:var(--bl);font-weight:800;background:var(--bl-l);${B}">합계</th>
       </tr>
       ${rows}
       <tr>
-        <td style="position:sticky;left:0;background:var(--bl-l);color:var(--bl);font-weight:900;padding:.3rem .5rem;white-space:nowrap;font-size:.82rem;${B}">합계</td>
+        <td style="position:sticky;left:0;background:var(--bl-l);color:var(--bl);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;width:130px;max-width:130px;padding:.3rem .5rem;font-size:.82rem;${B}">합계</td>
         ${totalCells}
         <td style="text-align:right;font-weight:900;padding:.3rem .5rem;white-space:nowrap;font-size:.85rem;background:var(--bl-l);color:var(--bl);${B}" class="mono">${fmtWon(yearSum)}</td>
       </tr>
