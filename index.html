@@ -173,7 +173,7 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
 .period-switch:active{background:var(--s2)}
 .ps-arrow{color:var(--t3);font-size:.8rem}
 .dmodal-bg{display:none;position:fixed;inset:0;background:rgba(10,22,40,.5);z-index:500;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
-#yearGridModalBg{align-items:center}
+#yearGridModalBg{align-items:center;backdrop-filter:none}
 #yearGridModalBg .dmodal{width:auto;max-width:96vw;border-radius:20px;margin:0 auto;overflow-x:auto}
 .dmodal-bg.open{display:flex}
 .dmodal{background:var(--s);border-radius:20px 20px 0 0;padding:1.3rem 1.2rem calc(1.3rem + env(safe-area-inset-bottom));max-width:520px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:var(--sh2)}
@@ -958,8 +958,8 @@ function closeItemActions(){ document.getElementById('itemActionModalBg').classL
 let yearGridYear=null;
 function openYearGrid(){
   yearGridYear=cur.year;
-  renderYearGrid();
   document.getElementById('yearGridModalBg').classList.add('open');
+  renderYearGrid();
   _bhPush();
 }
 function closeYearGrid(){ document.getElementById('yearGridModalBg').classList.remove('open'); }
@@ -987,7 +987,7 @@ function renderYearGrid(){
   let cellsHtml='';
 
   // 연도 이동 행 (표 첫 행, 전체 스팬, 세로 스크롤 시 맨 위 고정)
-  cellsHtml+=`<div style="grid-column:1/-1;position:sticky;top:0;z-index:5;background:var(--s);${HGRID}">
+  cellsHtml+=`<div class="ygrid-yearrow" style="grid-column:1/-1;position:sticky;top:0;z-index:5;background:var(--s);${HGRID}">
     <div style="position:sticky;left:0;width:fit-content;padding:.4rem .5rem;">
       <button class="year-nav-btn" onclick="yearGridNavYear(-1)">‹</button>
       <span style="margin:0 1rem;font-weight:900;font-size:1rem;color:var(--t)">${yearGridYear}년</span>
@@ -995,10 +995,10 @@ function renderYearGrid(){
     </div>
   </div>`;
 
-  // 헤더 행 (항목 / 1~12월 / 합계) - 연도 행 아래에 고정
-  cellsHtml+=`<div style="position:sticky;left:0;top:42px;z-index:4;text-align:left;background:var(--s2);color:var(--t);font-weight:800;font-size:.85rem;${NAME_CELL}${HGRID}">항목</div>`;
-  cellsHtml+=MONTH_LABELS.map(l=>`<div style="position:sticky;top:42px;z-index:3;text-align:center;background:var(--s2);color:var(--t);font-weight:800;font-size:.85rem;padding:.4rem .3rem;${HGRID}">${l}</div>`).join('');
-  cellsHtml+=`<div style="position:sticky;top:42px;z-index:3;background:var(--bl-l);color:var(--bl);font-weight:800;font-size:.85rem;${NAME_CELL}${HGRID}">합계</div>`;
+  // 헤더 행 (항목 / 1~12월 / 합계) - 연도 행 아래에 고정 (top 값은 렌더 후 실측해서 적용)
+  cellsHtml+=`<div class="ygrid-hcell" style="position:sticky;left:0;z-index:4;text-align:left;background:var(--s2);color:var(--t);font-weight:800;font-size:.85rem;${NAME_CELL}${HGRID}">항목</div>`;
+  cellsHtml+=MONTH_LABELS.map(l=>`<div class="ygrid-hcell" style="position:sticky;z-index:3;text-align:center;background:var(--s2);color:var(--t);font-weight:800;font-size:.85rem;padding:.4rem .3rem;${HGRID}">${l}</div>`).join('');
+  cellsHtml+=`<div class="ygrid-hcell" style="position:sticky;z-index:3;background:var(--bl-l);color:var(--bl);font-weight:800;font-size:.85rem;${NAME_CELL}${HGRID}">합계</div>`;
 
   ['필수','선택','투자','수입'].forEach(groupKey=>{
     const meta=SECTION_META[groupKey]; const items=meta.arr(yd);
@@ -1030,6 +1030,12 @@ function renderYearGrid(){
   cellsHtml+=`<div class="mono" style="font-weight:900;font-size:1rem;background:${YELLOW_BG};color:${clr(grandTotal,YELLOW_TX)};${NUM_CELL}${GRID}">${wonNum(grandTotal)}</div>`;
 
   body.innerHTML=`<div style="display:grid;grid-template-columns:150px repeat(12,108px) 130px;width:max-content">${cellsHtml}</div>`;
+
+  const yearRowEl=body.querySelector('.ygrid-yearrow');
+  if(yearRowEl){
+    const h=yearRowEl.getBoundingClientRect().height;
+    body.querySelectorAll('.ygrid-hcell').forEach(el=>{ el.style.top=h+'px'; });
+  }
 
   body.querySelectorAll('.ygrid-cell').forEach(input=>{
     input.onfocus=()=>{ pushUndo(); input.select(); };
