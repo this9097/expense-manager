@@ -1009,11 +1009,12 @@ function renderYearGrid(){
   });
   const grandCells=grandMonthTotals.map(v=>`<td style="text-align:right;padding:.35rem .4rem;font-size:.88rem;font-weight:900;white-space:nowrap;background:${YELLOW_BG};color:${clr(v,YELLOW_TX)};${GRID}" class="mono">${wonNum(v)}</td>`).join('');
   bodyRows+=`<tr><td style="position:sticky;left:0;z-index:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;${NAME_W}padding:.35rem .5rem;background:${YELLOW_BG};color:${YELLOW_TX};font-weight:900;font-size:.95rem;${GRID}">전체 합계</td>${grandCells}<td style="text-align:right;font-weight:900;padding:.35rem .5rem;white-space:nowrap;font-size:1rem;background:${YELLOW_BG};color:${clr(grandTotal,YELLOW_TX)};${GRID}" class="mono">${wonNum(grandTotal)}</td></tr>`;
-  body.innerHTML=`<table style="border-collapse:collapse">
+  const HGRID='box-shadow:inset 0 0 0 1px var(--bd), inset 0 -2px 0 0 var(--bl);';
+  body.innerHTML=`<table style="border-collapse:separate;border-spacing:0">
       <tr>
-        <th style="position:sticky;left:0;top:0;z-index:3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;${NAME_W}padding:.4rem .5rem;background:var(--s2);text-align:left;font-size:.85rem;color:var(--t);font-weight:800;${GRID}">항목</th>
-        ${MONTH_LABELS.map(l=>`<th style="position:sticky;top:0;z-index:2;${MONTH_W}padding:.4rem .3rem;white-space:nowrap;font-weight:800;color:var(--t);font-size:.85rem;text-align:center;background:var(--s2);${GRID}">${l}</th>`).join('')}
-        <th style="position:sticky;top:0;z-index:2;padding:.4rem .5rem;white-space:nowrap;font-size:.85rem;color:var(--bl);font-weight:800;background:var(--bl-l);${GRID}">합계</th>
+        <th style="position:sticky;left:0;top:0;z-index:3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;${NAME_W}padding:.4rem .5rem;background:var(--s2);text-align:left;font-size:.85rem;color:var(--t);font-weight:800;${HGRID}">항목</th>
+        ${MONTH_LABELS.map(l=>`<th style="position:sticky;top:0;z-index:2;${MONTH_W}padding:.4rem .3rem;white-space:nowrap;font-weight:800;color:var(--t);font-size:.85rem;text-align:center;background:var(--s2);${HGRID}">${l}</th>`).join('')}
+        <th style="position:sticky;top:0;z-index:2;padding:.4rem .5rem;white-space:nowrap;font-size:.85rem;color:var(--bl);font-weight:800;background:var(--bl-l);${HGRID}">합계</th>
       </tr>
       ${bodyRows}
     </table>`;
