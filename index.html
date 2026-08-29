@@ -293,6 +293,12 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
 
   <!-- 분석 -->
   <div id="tab-analysis" class="tab">
+    <div class="sl">항목 검색 · 전년 비교 바로가기</div>
+    <div class="card"><div class="cb">
+      <input class="set-in full" id="item-search-input" placeholder="항목명을 입력하세요 (예: 주거생활비)" oninput="renderItemSearchResults()" style="margin-top:0">
+      <div id="item-search-results" style="margin-top:.5rem"></div>
+    </div></div>
+
     <div class="sl">기간 지정 분석</div>
     <div class="card"><div class="cb">
       <div class="pbrow" id="range-preset-chips"></div>
@@ -979,6 +985,19 @@ function findMatchingItems(all, name){
 }
 const ITEM_DETAIL_YEAR_COLORS=['#94A3B8','#1A56DB','#DC7609','#15803D','#9333EA','#DB2777'];
 function itemMonthlySum(matches, mi){ return matches.reduce((a,it)=>a+(Number(it.m[mi])||0),0); }
+function renderItemSearchResults(){
+  const q=(document.getElementById('item-search-input').value||'').trim();
+  const resEl=document.getElementById('item-search-results');
+  if(!q){ resEl.innerHTML=''; return; }
+  const names=new Set();
+  years().forEach(y=>{
+    const yd=state.years[y];
+    [...yd.expenses, ...yd.investments, ...yd.income].forEach(it=>{ if(it.name.includes(q)) names.add(it.name); });
+  });
+  const list=[...names].sort();
+  if(!list.length){ resEl.innerHTML='<div class="note">일치하는 항목이 없습니다</div>'; return; }
+  resEl.innerHTML=list.map(n=>`<button class="btn btn-s" style="display:block;width:100%;text-align:left;margin-bottom:.4rem" onclick="showItemDetail('${n.replace(/'/g,"\\'")}')">${n}</button>`).join('');
+}
 function showItemDetail(name){
   document.getElementById('itemDetailTitle').textContent = name + ' 추이';
   document.getElementById('itemDetailModalBg').classList.add('open');
