@@ -984,6 +984,7 @@ function renderYearGrid(){
   const NAME_COL='position:sticky;left:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;width:130px;max-width:130px;padding:.3rem .5rem;'+B;
   const MONTH_COL='width:96px;box-sizing:border-box;padding:.3rem .35rem;white-space:nowrap;'+B;
   const YELLOW_BG='#FEF3C7', YELLOW_TX='#92610A';
+  const clr=(v,base)=> v<0 ? 'var(--rd)' : base;
   const grandMonthTotals=new Array(12).fill(0);
   let grandTotal=0;
   let bodyRows='';
@@ -995,18 +996,18 @@ function renderYearGrid(){
     items.forEach((it,idx)=>{
       const cells=MONTH_LABELS.map((_,mi)=>{
         const v=Number(it.m[mi])||0; monthTotals[mi]+=v; grandMonthTotals[mi]+=v;
-        return `<td style="padding:0;${B}"><input class="ygrid-cell" data-group="${groupKey}" data-idx="${idx}" data-mi="${mi}" inputmode="numeric" value="${v.toLocaleString('ko-KR')}" style="display:block;box-sizing:border-box;width:96px;text-align:right;border:none;padding:.3rem .4rem;font-size:.75rem;font-family:'SF Mono',Consolas,monospace;background:transparent"></td>`;
+        return `<td style="padding:0;${B}"><input class="ygrid-cell" data-group="${groupKey}" data-idx="${idx}" data-mi="${mi}" inputmode="numeric" value="${v.toLocaleString('ko-KR')}" style="display:block;box-sizing:border-box;width:96px;text-align:right;border:none;padding:.3rem .4rem;font-size:.75rem;font-family:'SF Mono',Consolas,monospace;background:transparent;color:${clr(v,'var(--t)')}"></td>`;
       }).join('');
       const yearTotal=it.m.reduce((a,v)=>a+(Number(v)||0),0);
       grandTotal+=yearTotal;
-      bodyRows+=`<tr><td style="${NAME_COL}background:var(--s);font-size:.8rem;font-weight:600">${it.name}</td>${cells}<td style="text-align:right;font-weight:900;font-size:.82rem;padding:.3rem .5rem;white-space:nowrap;background:var(--bl-l);color:var(--bl);${B}" class="mono">${fmtWon(yearTotal)}</td></tr>`;
+      bodyRows+=`<tr><td style="${NAME_COL}background:var(--s);font-size:.8rem;font-weight:600">${it.name}</td>${cells}<td style="text-align:right;font-weight:900;font-size:.82rem;padding:.3rem .5rem;white-space:nowrap;background:var(--bl-l);color:${clr(yearTotal,'var(--bl)')};${B}" class="mono">${fmtWon(yearTotal)}</td></tr>`;
     });
-    const totalCells=monthTotals.map(v=>`<td style="text-align:right;padding:.3rem .35rem;font-size:.78rem;font-weight:900;white-space:nowrap;background:var(--bl-l);color:var(--bl);${B}" class="mono">${fmtWon(v)}</td>`).join('');
+    const totalCells=monthTotals.map(v=>`<td style="text-align:right;padding:.3rem .35rem;font-size:.78rem;font-weight:900;white-space:nowrap;background:var(--bl-l);color:${clr(v,'var(--bl)')};${B}" class="mono">${fmtWon(v)}</td>`).join('');
     const sectionSum=monthTotals.reduce((a,b)=>a+b,0);
-    bodyRows+=`<tr><td style="${NAME_COL}background:var(--bl-l);color:var(--bl);font-weight:900;font-size:.82rem">합계</td>${totalCells}<td style="text-align:right;font-weight:900;padding:.3rem .5rem;white-space:nowrap;font-size:.85rem;background:var(--bl-l);color:var(--bl);${B}" class="mono">${fmtWon(sectionSum)}</td></tr>`;
+    bodyRows+=`<tr><td style="${NAME_COL}background:var(--bl-l);color:var(--bl);font-weight:900;font-size:.82rem">합계</td>${totalCells}<td style="text-align:right;font-weight:900;padding:.3rem .5rem;white-space:nowrap;font-size:.85rem;background:var(--bl-l);color:${clr(sectionSum,'var(--bl)')};${B}" class="mono">${fmtWon(sectionSum)}</td></tr>`;
   });
-  const grandCells=grandMonthTotals.map(v=>`<td style="text-align:right;padding:.3rem .35rem;font-size:.78rem;font-weight:900;white-space:nowrap;background:${YELLOW_BG};color:${YELLOW_TX};${B}" class="mono">${fmtWon(v)}</td>`).join('');
-  bodyRows+=`<tr><td style="${NAME_COL}background:${YELLOW_BG};color:${YELLOW_TX};font-weight:900;font-size:.85rem">전체 합계</td>${grandCells}<td style="text-align:right;font-weight:900;padding:.3rem .5rem;white-space:nowrap;font-size:.9rem;background:${YELLOW_BG};color:${YELLOW_TX};${B}" class="mono">${fmtWon(grandTotal)}</td></tr>`;
+  const grandCells=grandMonthTotals.map(v=>`<td style="text-align:right;padding:.3rem .35rem;font-size:.78rem;font-weight:900;white-space:nowrap;background:${YELLOW_BG};color:${clr(v,YELLOW_TX)};${B}" class="mono">${fmtWon(v)}</td>`).join('');
+  bodyRows+=`<tr><td style="${NAME_COL}background:${YELLOW_BG};color:${YELLOW_TX};font-weight:900;font-size:.85rem">전체 합계</td>${grandCells}<td style="text-align:right;font-weight:900;padding:.3rem .5rem;white-space:nowrap;font-size:.9rem;background:${YELLOW_BG};color:${clr(grandTotal,YELLOW_TX)};${B}" class="mono">${fmtWon(grandTotal)}</td></tr>`;
   body.innerHTML=`<div style="overflow-x:auto">
     <table style="border-collapse:collapse">
       <tr>
