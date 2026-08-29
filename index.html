@@ -934,14 +934,10 @@ const SECTION_META={
 function openItemActions(groupKey, items, idx){
   const it=items[idx];
   const yd=yearData();
-  const others=Object.keys(SECTION_META).filter(k=>k!==groupKey);
-  const moveButtons = others.map(k=>`<button class="btn btn-s" style="margin-top:.4rem" onclick="moveItemTo('${groupKey}',${idx},'${k}')">${SECTION_META[k].label}로 이동</button>`).join('');
   document.getElementById('itemActionTitle').textContent = it.name;
   document.getElementById('itemActionBody').innerHTML = `
     <button class="btn btn-p" onclick="closeItemActions();showItemDetail('${it.name.replace(/'/g,"\\\\'")}')">📈 이 항목 추이 보기</button>
-    ${moveButtons}
     <button class="btn btn-d" style="margin-top:.7rem" onclick="deleteItemConfirm('${groupKey}',${idx})">삭제</button>`;
-  document.getElementById('itemActionModalBg').classList.add('open');
   _bhPush();
 }
 function closeItemActions(){ document.getElementById('itemActionModalBg').classList.remove('open'); }
