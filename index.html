@@ -916,7 +916,7 @@ function drawTrend(){
     if(yd){ inc.push(sumMonth(yd.income,m)); exp.push(sumMonth(yd.expenses,m)); } else { inc.push(0); exp.push(0); } }
   charts.trend=new Chart(ctx,{type:'line',data:{labels,datasets:[
     {label:'수입',data:inc,borderColor:'#15803D',backgroundColor:'rgba(21,128,61,.1)',fill:true,tension:.35},
-    {label:'지출',data:exp,borderColor:'#1A56DB',backgroundColor:'rgba(26,86,219,.12)',fill:true,tension:.35}
+    {label:'지출',data:exp,borderColor:'#B91C1C',backgroundColor:'rgba(185,28,28,.12)',fill:true,tension:.35}
   ]},options:{maintainAspectRatio:false,plugins:{legend:{labels:{color:'#4A5568',boxWidth:10}}},scales:{
     x:{ticks:{color:'#94A3B8'},grid:{display:false}},
     y:{ticks:{color:'#94A3B8',callback:(v)=>(v/10000)+'만'},grid:{color:'#E4E8F0'}}}}});
@@ -1344,7 +1344,7 @@ function renderRangeAnalysis(){
       if(charts.rangeTrend) charts.rangeTrend.destroy();
       charts.rangeTrend=new Chart(ctx,{type:'line',data:{labels,datasets:[
         {label:'수입',data:incArr,borderColor:'#15803D',backgroundColor:'rgba(21,128,61,.1)',fill:true,tension:.3},
-        {label:'지출',data:expArr,borderColor:'#1A56DB',backgroundColor:'rgba(26,86,219,.12)',fill:true,tension:.3}
+        {label:'지출',data:expArr,borderColor:'#B91C1C',backgroundColor:'rgba(185,28,28,.12)',fill:true,tension:.3}
       ]},options:{plugins:{legend:{labels:{color:'#4A5568',boxWidth:10}}},scales:{
         x:{ticks:{color:'#94A3B8'},grid:{display:false}},y:{ticks:{color:'#94A3B8',callback:(v)=>(v/10000)+'만'},grid:{color:'#E4E8F0'}}}}});
     }
@@ -1380,7 +1380,7 @@ function renderAnalysis(){
     if(ctx && typeof Chart!=='undefined'){
       if(charts.yearly) charts.yearly.destroy();
       charts.yearly=new Chart(ctx,{type:'bar',data:{labels:ys.map(y=>y+'년'),datasets:[
-        {label:'수입',data:incArr,backgroundColor:'#15803D'},{label:'지출',data:expArr,backgroundColor:'#1A56DB'}
+        {label:'수입',data:incArr,backgroundColor:'#15803D'},{label:'지출',data:expArr,backgroundColor:'#B91C1C'}
       ]},options:{maintainAspectRatio:false,plugins:{legend:{labels:{color:'#4A5568',boxWidth:10}}},scales:{
         x:{ticks:{color:'#94A3B8'},grid:{display:false}},y:{ticks:{color:'#94A3B8',callback:(v)=>(v/10000)+'만'},grid:{color:'#E4E8F0'}}}}});
     }
