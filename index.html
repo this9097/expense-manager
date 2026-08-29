@@ -993,7 +993,7 @@ function renderYearGrid(){
   ['필수','선택','투자','수입'].forEach(groupKey=>{
     const meta=SECTION_META[groupKey]; const items=meta.arr(yd);
     if(!items.length) return;
-    bodyCells+=`<div style="grid-column:1/-1;position:sticky;top:0;z-index:2;background:var(--s2);font-weight:800;font-size:.95rem;padding:.5rem .55rem;${GRID}">${meta.label}</div>`;
+    bodyCells+=`<div style="grid-column:1/-1;position:sticky;top:0;z-index:2;background:var(--s2);${GRID}"><div style="position:sticky;left:0;width:fit-content;font-weight:800;font-size:.95rem;padding:.5rem .55rem;">${meta.label}</div></div>`;
     const monthTotals=new Array(12).fill(0);
     items.forEach((it,idx)=>{
       bodyCells+=`<div style="position:sticky;left:0;z-index:1;background:var(--s);font-weight:600;font-size:.9rem;${NAME_CELL}${GRID}">${it.name}</div>`;
