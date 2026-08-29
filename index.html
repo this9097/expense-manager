@@ -1004,20 +1004,20 @@ function renderYearGrid(){
       });
       const yearTotal=it.m.reduce((a,v)=>a+(Number(v)||0),0);
       netTotal+=yearTotal*sign;
-      bodyCells+=`<div class="mono" style="font-weight:900;font-size:.92rem;background:var(--bl-l);color:${clr(yearTotal,'var(--bl)')};${NUM_CELL}${GRID}">${wonNum(yearTotal)}</div>`;
+      bodyCells+=`<div class="mono" style="font-weight:900;font-size:.92rem;background:var(--bl-l);color:${clr(yearTotal,'var(--t)')};${NUM_CELL}${GRID}">${wonNum(yearTotal)}</div>`;
     });
     bodyCells+=`<div style="position:sticky;left:0;z-index:1;background:var(--bl-l);color:var(--bl);font-weight:900;font-size:.9rem;${NAME_CELL}${GRID}">합계</div>`;
     monthTotals.forEach(v=>{
-      bodyCells+=`<div class="mono" style="font-weight:900;font-size:.88rem;background:var(--bl-l);color:${clr(v,'var(--bl)')};${NUM_CELL}${GRID}">${wonNum(v)}</div>`;
+      bodyCells+=`<div class="mono" style="font-weight:900;font-size:.88rem;background:var(--bl-l);color:${clr(v,'var(--t)')};${NUM_CELL}${GRID}">${wonNum(v)}</div>`;
     });
     const sectionSum=monthTotals.reduce((a,b)=>a+b,0);
-    bodyCells+=`<div class="mono" style="font-weight:900;font-size:.95rem;background:var(--bl-l);color:${clr(sectionSum,'var(--bl)')};${NUM_CELL}${GRID}">${wonNum(sectionSum)}</div>`;
+    bodyCells+=`<div class="mono" style="font-weight:900;font-size:.95rem;background:var(--bl-l);color:${clr(sectionSum,'var(--t)')};${NUM_CELL}${GRID}">${wonNum(sectionSum)}</div>`;
   });
   bodyCells+=`<div style="position:sticky;left:0;z-index:1;background:${YELLOW_BG};color:${YELLOW_TX};font-weight:900;font-size:.95rem;${NAME_CELL}${GRID}">수입 - 지출</div>`;
   netMonthTotals.forEach(v=>{
-    bodyCells+=`<div class="mono" style="font-weight:900;font-size:.88rem;background:${YELLOW_BG};color:${clr(v,YELLOW_TX)};${NUM_CELL}${GRID}">${wonNum(v)}</div>`;
+    bodyCells+=`<div class="mono" style="font-weight:900;font-size:.88rem;background:${YELLOW_BG};color:${clr(v,'var(--t)')};${NUM_CELL}${GRID}">${wonNum(v)}</div>`;
   });
-  bodyCells+=`<div class="mono" style="font-weight:900;font-size:1rem;background:${YELLOW_BG};color:${clr(netTotal,YELLOW_TX)};${NUM_CELL}${GRID}">${wonNum(netTotal)}</div>`;
+  bodyCells+=`<div class="mono" style="font-weight:900;font-size:1rem;background:${YELLOW_BG};color:${clr(netTotal,'var(--t)')};${NUM_CELL}${GRID}">${wonNum(netTotal)}</div>`;
 
   // 헤더 (연도 이동 + 항목/월/합계) - 별도 박스, 세로 스크롤에서 완전히 분리
   const headerCells=
