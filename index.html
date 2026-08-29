@@ -366,6 +366,7 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
     <div class="dmodal">
       <div class="year-label" id="itemDetailTitle" style="margin-bottom:.4rem"></div>
       <div class="note" id="itemDetailNote" style="display:none;margin-bottom:.7rem"></div>
+      <div id="itemDetailYoY" style="display:none;margin-bottom:.9rem"></div>
       <div style="position:relative;height:220px;margin-bottom:.9rem"><canvas id="itemDetailChart"></canvas></div>
       <div class="dtw" style="margin-bottom:.9rem"><table class="dt" id="itemDetailYearTable"></table></div>
       <button class="btn btn-s" onclick="closeItemDetail()">닫기</button>
@@ -976,32 +977,60 @@ function findMatchingItems(all, name){
   if(exact.length) return exact;
   return all.filter(x=> x.name.includes(name) || name.includes(x.name));
 }
+const ITEM_DETAIL_YEAR_COLORS=['#94A3B8','#1A56DB','#DC7609','#15803D','#9333EA','#DB2777'];
+function itemMonthlySum(matches, mi){ return matches.reduce((a,it)=>a+(Number(it.m[mi])||0),0); }
 function showItemDetail(name){
   document.getElementById('itemDetailTitle').textContent = name + ' 추이';
   document.getElementById('itemDetailModalBg').classList.add('open');
   _bhPush();
-  const ys=years(); const labels=[]; const values=[]; const matchedNames=new Set();
+  const ys=years(); const matchedNames=new Set();
+  const matchesByYear={};
   ys.forEach(y=>{
     const yd=state.years[y];
     const all=[...yd.expenses, ...yd.investments, ...yd.income];
     const matches=findMatchingItems(all, name);
     matches.forEach(m=>matchedNames.add(m.name));
-    for(let mi=0; mi<12; mi++){
-      labels.push(`${String(y).slice(2)}.${mi+1}`);
-      const sum=matches.reduce((a,it)=>a+(Number(it.m[mi])||0),0);
-      values.push(sum);
-    }
+    matchesByYear[y]=matches;
   });
   const noteEl=document.getElementById('itemDetailNote');
   if(matchedNames.size>1){ noteEl.textContent='연도별로 이름이 조금씩 달랐던 유사 항목(' + [...matchedNames].join(', ') + ')을 함께 합산했습니다.'; noteEl.style.display='block'; }
   else{ noteEl.style.display='none'; }
+
+  const yoyEl=document.getElementById('itemDetailYoY');
+  const curY=cur.year, curM=cur.month;
+  const prevY=String(parseInt(curY)-1);
+  if(yoyEl){
+    if(matchesByYear[curY] && matchesByYear[prevY]){
+      const thisVal=itemMonthlySum(matchesByYear[curY], curM);
+      const prevVal=itemMonthlySum(matchesByYear[prevY], curM);
+      const diff=thisVal-prevVal;
+      const pct=prevVal!==0 ? Math.round((diff/prevVal)*1000)/10 : (thisVal!==0?100:0);
+      const sign=diff>0?'+':''; const cls=diff>0?'neg':(diff<0?'pos':'');
+      yoyEl.style.display='block';
+      yoyEl.innerHTML=`<div class="sl" style="margin-top:0">${curY}년 ${MONTH_LABELS[curM]} vs ${prevY}년 ${MONTH_LABELS[curM]}</div>
+        <div class="card"><div class="cb" style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap">
+          <div><div class="note">${prevY}년 ${MONTH_LABELS[curM]}</div><div class="mono" style="font-weight:800">${fmtWon(prevVal)}</div></div>
+          <div style="font-size:1.1rem;color:var(--sub)">→</div>
+          <div><div class="note">${curY}년 ${MONTH_LABELS[curM]}</div><div class="mono" style="font-weight:800">${fmtWon(thisVal)}</div></div>
+          <div style="margin-left:auto;text-align:right"><div class="note">전년 동월 대비</div><div class="mono ${cls}" style="font-weight:800">${sign}${fmtWon(diff)} (${sign}${pct}%)</div></div>
+        </div></div>`;
+    }else{
+      yoyEl.style.display='none'; yoyEl.innerHTML='';
+    }
+  }
+
   setTimeout(()=>{
     try{
       const ctx=document.getElementById('itemDetailChart');
       if(charts.itemDetail) charts.itemDetail.destroy();
       if(ctx && typeof Chart!=='undefined'){
-        charts.itemDetail=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:values,backgroundColor:'#1A56DB'}]},
-          options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+        const datasets=ys.map((y,i)=>({
+          label:y+'년',
+          data:MONTH_LABELS.map((_,mi)=>itemMonthlySum(matchesByYear[y], mi)),
+          backgroundColor:ITEM_DETAIL_YEAR_COLORS[i%ITEM_DETAIL_YEAR_COLORS.length]
+        }));
+        charts.itemDetail=new Chart(ctx,{type:'bar',data:{labels:MONTH_LABELS,datasets},
+          options:{maintainAspectRatio:false,plugins:{legend:{labels:{color:'#4A5568',boxWidth:10}}},scales:{
             x:{ticks:{color:'#94A3B8',maxRotation:0,autoSkip:true},grid:{display:false}},
             y:{ticks:{color:'#94A3B8',callback:(v)=>(v/10000)+'만'},grid:{color:'#E4E8F0'}}}}});
       }
@@ -1009,8 +1038,7 @@ function showItemDetail(name){
   }, 50);
   const tbl=document.getElementById('itemDetailYearTable');
   const rows=ys.map(y=>{
-    const yd=state.years[y]; const all=[...yd.expenses, ...yd.investments, ...yd.income];
-    const matches=findMatchingItems(all, name);
+    const matches=matchesByYear[y];
     const total=matches.reduce((a,it)=>a+it.m.reduce((x,v)=>x+(Number(v)||0),0),0);
     return `<tr><td>${y}년</td><td style="text-align:right" class="mono">${fmtWon(total)}</td></tr>`;
   }).join('');
