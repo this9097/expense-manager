@@ -339,7 +339,7 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
   </div>
 
   <!-- 기간 선택 바텀시트 -->
-  <div class="dmodal-bg" id="periodModalBg">
+  <div class="dmodal-bg" id="periodModalBg" onclick="if(event.target===this) closePeriodModal()">
     <div class="dmodal">
       <div class="year-nav">
         <button onclick="periodNavYear(-1)">‹</button>
