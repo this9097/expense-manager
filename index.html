@@ -361,7 +361,7 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
   <!-- 연간 표(엑셀형) 보기 -->
   <div class="dmodal-bg" id="yearGridModalBg" onclick="if(event.target===this) closeYearGrid()">
     <div class="dmodal" style="max-width:96vw">
-      <div class="year-nav" style="position:sticky;left:0;margin-bottom:.7rem;width:fit-content">
+      <div class="year-nav" style="position:sticky;top:0;left:0;z-index:4;height:42px;width:100%;background:var(--s);box-shadow:inset 0 -2px 0 0 var(--bl);margin-bottom:0">
         <button onclick="yearGridNavYear(-1)">‹</button>
         <span class="year-label" id="yearGridYearLabel"></span>
         <button onclick="yearGridNavYear(1)">›</button>
@@ -1012,9 +1012,9 @@ function renderYearGrid(){
   const HGRID='box-shadow:inset 0 0 0 1px var(--bd), inset 0 -2px 0 0 var(--bl);';
   body.innerHTML=`<table style="border-collapse:separate;border-spacing:0">
       <tr>
-        <th style="position:sticky;left:0;top:0;z-index:3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;${NAME_W}padding:.4rem .5rem;background:var(--s2);text-align:left;font-size:.85rem;color:var(--t);font-weight:800;${HGRID}">항목</th>
-        ${MONTH_LABELS.map(l=>`<th style="position:sticky;top:0;z-index:2;${MONTH_W}padding:.4rem .3rem;white-space:nowrap;font-weight:800;color:var(--t);font-size:.85rem;text-align:center;background:var(--s2);${HGRID}">${l}</th>`).join('')}
-        <th style="position:sticky;top:0;z-index:2;padding:.4rem .5rem;white-space:nowrap;font-size:.85rem;color:var(--bl);font-weight:800;background:var(--bl-l);${HGRID}">합계</th>
+        <th style="position:sticky;left:0;top:42px;z-index:3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;${NAME_W}padding:.4rem .5rem;background:var(--s2);text-align:left;font-size:.85rem;color:var(--t);font-weight:800;${HGRID}">항목</th>
+        ${MONTH_LABELS.map(l=>`<th style="position:sticky;top:42px;z-index:2;${MONTH_W}padding:.4rem .3rem;white-space:nowrap;font-weight:800;color:var(--t);font-size:.85rem;text-align:center;background:var(--s2);${HGRID}">${l}</th>`).join('')}
+        <th style="position:sticky;top:42px;z-index:2;padding:.4rem .5rem;white-space:nowrap;font-size:.85rem;color:var(--bl);font-weight:800;background:var(--bl-l);${HGRID}">합계</th>
       </tr>
       ${bodyRows}
     </table>`;
