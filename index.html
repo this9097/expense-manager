@@ -359,7 +359,7 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
   </div>
 
   <!-- 연간 표(엑셀형) 보기 -->
-  <div class="dmodal-bg" id="yearGridModalBg">
+  <div class="dmodal-bg" id="yearGridModalBg" onclick="if(event.target===this) closeYearGrid()">
     <div class="dmodal" style="max-width:96vw">
       <div class="year-nav" style="margin-bottom:.7rem">
         <button onclick="yearGridNavYear(-1)">‹</button>
