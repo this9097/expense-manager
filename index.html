@@ -985,24 +985,25 @@ function renderYearGrid(){
   const YELLOW_BG='#FEF3C7', YELLOW_TX='#92610A';
   const NAME_CELL='white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:.35rem .5rem;';
   const NUM_CELL='text-align:right;white-space:nowrap;padding:.35rem .4rem;';
-  const grandMonthTotals=new Array(12).fill(0);
-  let grandTotal=0;
+  const netMonthTotals=new Array(12).fill(0); // 수입 - 지출(필수+선택), 투자/저축은 제외 (Overview 탭과 동일한 방식)
+  let netTotal=0;
   let bodyCells='';
 
   // 필수/선택/투자/수입 데이터 (본문 - 이 영역만 스크롤됨)
   ['필수','선택','투자','수입'].forEach(groupKey=>{
     const meta=SECTION_META[groupKey]; const items=meta.arr(yd);
     if(!items.length) return;
+    const sign=(groupKey==='수입') ? 1 : (groupKey==='투자' ? 0 : -1);
     bodyCells+=`<div style="grid-column:1/-1;position:sticky;top:0;z-index:2;background:var(--s2);${GRID}"><div style="position:sticky;left:0;width:fit-content;font-weight:800;font-size:.95rem;padding:.5rem .55rem;">${meta.label}</div></div>`;
     const monthTotals=new Array(12).fill(0);
     items.forEach((it,idx)=>{
       bodyCells+=`<div style="position:sticky;left:0;z-index:1;background:var(--s);font-weight:600;font-size:.9rem;${NAME_CELL}${GRID}">${it.name}</div>`;
       MONTH_LABELS.forEach((_,mi)=>{
-        const v=Number(it.m[mi])||0; monthTotals[mi]+=v; grandMonthTotals[mi]+=v;
+        const v=Number(it.m[mi])||0; monthTotals[mi]+=v; netMonthTotals[mi]+=v*sign;
         bodyCells+=`<div style="padding:0;${GRID}"><input class="ygrid-cell" data-group="${groupKey}" data-idx="${idx}" data-mi="${mi}" inputmode="numeric" value="${v.toLocaleString('ko-KR')}" style="display:block;width:100%;box-sizing:border-box;text-align:right;border:none;padding:.35rem .45rem;font-size:.85rem;font-family:'SF Mono',Consolas,monospace;background:transparent;color:${clr(v,'var(--t)')}"></div>`;
       });
       const yearTotal=it.m.reduce((a,v)=>a+(Number(v)||0),0);
-      grandTotal+=yearTotal;
+      netTotal+=yearTotal*sign;
       bodyCells+=`<div class="mono" style="font-weight:900;font-size:.92rem;background:var(--bl-l);color:${clr(yearTotal,'var(--bl)')};${NUM_CELL}${GRID}">${wonNum(yearTotal)}</div>`;
     });
     bodyCells+=`<div style="position:sticky;left:0;z-index:1;background:var(--bl-l);color:var(--bl);font-weight:900;font-size:.9rem;${NAME_CELL}${GRID}">합계</div>`;
@@ -1012,11 +1013,11 @@ function renderYearGrid(){
     const sectionSum=monthTotals.reduce((a,b)=>a+b,0);
     bodyCells+=`<div class="mono" style="font-weight:900;font-size:.95rem;background:var(--bl-l);color:${clr(sectionSum,'var(--bl)')};${NUM_CELL}${GRID}">${wonNum(sectionSum)}</div>`;
   });
-  bodyCells+=`<div style="position:sticky;left:0;z-index:1;background:${YELLOW_BG};color:${YELLOW_TX};font-weight:900;font-size:.95rem;${NAME_CELL}${GRID}">전체 합계</div>`;
-  grandMonthTotals.forEach(v=>{
+  bodyCells+=`<div style="position:sticky;left:0;z-index:1;background:${YELLOW_BG};color:${YELLOW_TX};font-weight:900;font-size:.95rem;${NAME_CELL}${GRID}">수입 - 지출</div>`;
+  netMonthTotals.forEach(v=>{
     bodyCells+=`<div class="mono" style="font-weight:900;font-size:.88rem;background:${YELLOW_BG};color:${clr(v,YELLOW_TX)};${NUM_CELL}${GRID}">${wonNum(v)}</div>`;
   });
-  bodyCells+=`<div class="mono" style="font-weight:900;font-size:1rem;background:${YELLOW_BG};color:${clr(grandTotal,YELLOW_TX)};${NUM_CELL}${GRID}">${wonNum(grandTotal)}</div>`;
+  bodyCells+=`<div class="mono" style="font-weight:900;font-size:1rem;background:${YELLOW_BG};color:${clr(netTotal,YELLOW_TX)};${NUM_CELL}${GRID}">${wonNum(netTotal)}</div>`;
 
   // 헤더 (연도 이동 + 항목/월/합계) - 별도 박스, 세로 스크롤에서 완전히 분리
   const headerCells=
