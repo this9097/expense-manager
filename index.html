@@ -174,7 +174,7 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
 .ps-arrow{color:var(--t3);font-size:.8rem}
 .dmodal-bg{display:none;position:fixed;inset:0;background:rgba(10,22,40,.5);z-index:500;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
 #yearGridModalBg{align-items:center}
-#yearGridModalBg .dmodal{width:auto;max-width:96vw;border-radius:20px;margin:0 auto}
+#yearGridModalBg .dmodal{width:auto;max-width:96vw;border-radius:20px;margin:0 auto;overflow-x:auto}
 .dmodal-bg.open{display:flex}
 .dmodal{background:var(--s);border-radius:20px 20px 0 0;padding:1.3rem 1.2rem calc(1.3rem + env(safe-area-inset-bottom));max-width:520px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:var(--sh2)}
 .year-nav{display:flex;align-items:center;justify-content:center;gap:1rem;margin-bottom:.9rem}
@@ -361,13 +361,13 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
   <!-- 연간 표(엑셀형) 보기 -->
   <div class="dmodal-bg" id="yearGridModalBg" onclick="if(event.target===this) closeYearGrid()">
     <div class="dmodal" style="max-width:96vw">
-      <div class="year-nav" style="margin-bottom:.7rem">
+      <div class="year-nav" style="position:sticky;left:0;margin-bottom:.7rem;width:fit-content">
         <button onclick="yearGridNavYear(-1)">‹</button>
         <span class="year-label" id="yearGridYearLabel"></span>
         <button onclick="yearGridNavYear(1)">›</button>
       </div>
       <div id="yearGridBody"></div>
-      <button class="btn btn-s" style="margin-top:.9rem" onclick="closeYearGrid()">닫기</button>
+      <button class="btn btn-s" style="position:sticky;left:0;margin-top:.9rem" onclick="closeYearGrid()">닫기</button>
     </div>
   </div>
 
@@ -980,44 +980,43 @@ function renderYearGrid(){
   const yd=state.years[yearGridYear];
   const body=document.getElementById('yearGridBody');
   if(!yd){ body.innerHTML='<div class="note">데이터가 없습니다</div>'; return; }
-  const B='border:1px solid var(--bd)';
-  const NAME_COL='position:sticky;left:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;width:130px;max-width:130px;padding:.3rem .5rem;box-shadow:inset 0 0 0 1px var(--bd);';
-  const MONTH_COL='width:96px;box-sizing:border-box;padding:.3rem .35rem;white-space:nowrap;'+B;
-  const YELLOW_BG='#FEF3C7', YELLOW_TX='#92610A';
+  const GRID='box-shadow:inset 0 0 0 1px var(--bd);';
+  const NAME_W='width:150px;max-width:150px;';
+  const MONTH_W='width:108px;box-sizing:border-box;';
+  const wonNum=(n)=>Math.round(n||0).toLocaleString('ko-KR');
   const clr=(v,base)=> v<0 ? 'var(--rd)' : base;
+  const YELLOW_BG='#FEF3C7', YELLOW_TX='#92610A';
   const grandMonthTotals=new Array(12).fill(0);
   let grandTotal=0;
   let bodyRows='';
   ['필수','선택','투자','수입'].forEach(groupKey=>{
     const meta=SECTION_META[groupKey]; const items=meta.arr(yd);
     if(!items.length) return;
-    bodyRows+=`<tr><td colspan="14" style="background:var(--s2);font-weight:800;padding:.45rem .5rem;font-size:.8rem;${B}">${meta.label}</td></tr>`;
+    bodyRows+=`<tr><td colspan="14" style="background:var(--s2);font-weight:800;padding:.5rem .55rem;font-size:.95rem;${GRID}">${meta.label}</td></tr>`;
     const monthTotals=new Array(12).fill(0);
     items.forEach((it,idx)=>{
       const cells=MONTH_LABELS.map((_,mi)=>{
         const v=Number(it.m[mi])||0; monthTotals[mi]+=v; grandMonthTotals[mi]+=v;
-        return `<td style="padding:0;${B}"><input class="ygrid-cell" data-group="${groupKey}" data-idx="${idx}" data-mi="${mi}" inputmode="numeric" value="${v.toLocaleString('ko-KR')}" style="display:block;box-sizing:border-box;width:96px;text-align:right;border:none;padding:.3rem .4rem;font-size:.75rem;font-family:'SF Mono',Consolas,monospace;background:transparent;color:${clr(v,'var(--t)')}"></td>`;
+        return `<td style="padding:0;${GRID}"><input class="ygrid-cell" data-group="${groupKey}" data-idx="${idx}" data-mi="${mi}" inputmode="numeric" value="${v.toLocaleString('ko-KR')}" style="display:block;box-sizing:border-box;width:108px;text-align:right;border:none;padding:.35rem .45rem;font-size:.85rem;font-family:'SF Mono',Consolas,monospace;background:transparent;color:${clr(v,'var(--t)')}"></td>`;
       }).join('');
       const yearTotal=it.m.reduce((a,v)=>a+(Number(v)||0),0);
       grandTotal+=yearTotal;
-      bodyRows+=`<tr><td style="${NAME_COL}background:var(--s);font-size:.8rem;font-weight:600">${it.name}</td>${cells}<td style="text-align:right;font-weight:900;font-size:.82rem;padding:.3rem .5rem;white-space:nowrap;background:var(--bl-l);color:${clr(yearTotal,'var(--bl)')};${B}" class="mono">${fmtWon(yearTotal)}</td></tr>`;
+      bodyRows+=`<tr><td style="position:sticky;left:0;z-index:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;${NAME_W}padding:.35rem .5rem;background:var(--s);font-size:.9rem;font-weight:600;${GRID}">${it.name}</td>${cells}<td style="text-align:right;font-weight:900;font-size:.92rem;padding:.35rem .5rem;white-space:nowrap;background:var(--bl-l);color:${clr(yearTotal,'var(--bl)')};${GRID}" class="mono">${wonNum(yearTotal)}</td></tr>`;
     });
-    const totalCells=monthTotals.map(v=>`<td style="text-align:right;padding:.3rem .35rem;font-size:.78rem;font-weight:900;white-space:nowrap;background:var(--bl-l);color:${clr(v,'var(--bl)')};${B}" class="mono">${fmtWon(v)}</td>`).join('');
+    const totalCells=monthTotals.map(v=>`<td style="text-align:right;padding:.35rem .4rem;font-size:.88rem;font-weight:900;white-space:nowrap;background:var(--bl-l);color:${clr(v,'var(--bl)')};${GRID}" class="mono">${wonNum(v)}</td>`).join('');
     const sectionSum=monthTotals.reduce((a,b)=>a+b,0);
-    bodyRows+=`<tr><td style="${NAME_COL}background:var(--bl-l);color:var(--bl);font-weight:900;font-size:.82rem">합계</td>${totalCells}<td style="text-align:right;font-weight:900;padding:.3rem .5rem;white-space:nowrap;font-size:.85rem;background:var(--bl-l);color:${clr(sectionSum,'var(--bl)')};${B}" class="mono">${fmtWon(sectionSum)}</td></tr>`;
+    bodyRows+=`<tr><td style="position:sticky;left:0;z-index:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;${NAME_W}padding:.35rem .5rem;background:var(--bl-l);color:var(--bl);font-weight:900;font-size:.9rem;${GRID}">합계</td>${totalCells}<td style="text-align:right;font-weight:900;padding:.35rem .5rem;white-space:nowrap;font-size:.95rem;background:var(--bl-l);color:${clr(sectionSum,'var(--bl)')};${GRID}" class="mono">${wonNum(sectionSum)}</td></tr>`;
   });
-  const grandCells=grandMonthTotals.map(v=>`<td style="text-align:right;padding:.3rem .35rem;font-size:.78rem;font-weight:900;white-space:nowrap;background:${YELLOW_BG};color:${clr(v,YELLOW_TX)};${B}" class="mono">${fmtWon(v)}</td>`).join('');
-  bodyRows+=`<tr><td style="${NAME_COL}background:${YELLOW_BG};color:${YELLOW_TX};font-weight:900;font-size:.85rem">전체 합계</td>${grandCells}<td style="text-align:right;font-weight:900;padding:.3rem .5rem;white-space:nowrap;font-size:.9rem;background:${YELLOW_BG};color:${clr(grandTotal,YELLOW_TX)};${B}" class="mono">${fmtWon(grandTotal)}</td></tr>`;
-  body.innerHTML=`<div style="overflow-x:auto">
-    <table style="border-collapse:collapse">
+  const grandCells=grandMonthTotals.map(v=>`<td style="text-align:right;padding:.35rem .4rem;font-size:.88rem;font-weight:900;white-space:nowrap;background:${YELLOW_BG};color:${clr(v,YELLOW_TX)};${GRID}" class="mono">${wonNum(v)}</td>`).join('');
+  bodyRows+=`<tr><td style="position:sticky;left:0;z-index:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;${NAME_W}padding:.35rem .5rem;background:${YELLOW_BG};color:${YELLOW_TX};font-weight:900;font-size:.95rem;${GRID}">전체 합계</td>${grandCells}<td style="text-align:right;font-weight:900;padding:.35rem .5rem;white-space:nowrap;font-size:1rem;background:${YELLOW_BG};color:${clr(grandTotal,YELLOW_TX)};${GRID}" class="mono">${wonNum(grandTotal)}</td></tr>`;
+  body.innerHTML=`<table style="border-collapse:collapse">
       <tr>
-        <th style="${NAME_COL}background:var(--s2);text-align:left;font-size:.68rem;color:var(--t3)">항목</th>
-        ${MONTH_LABELS.map(l=>`<th style="${MONTH_COL}font-weight:700;color:var(--t3);font-size:.66rem;text-align:center;background:var(--s2)">${l}</th>`).join('')}
-        <th style="padding:.3rem .5rem;white-space:nowrap;font-size:.7rem;color:var(--bl);font-weight:800;background:var(--bl-l);${B}">합계</th>
+        <th style="position:sticky;left:0;top:0;z-index:3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;${NAME_W}padding:.4rem .5rem;background:var(--s2);text-align:left;font-size:.85rem;color:var(--t);font-weight:800;${GRID}">항목</th>
+        ${MONTH_LABELS.map(l=>`<th style="position:sticky;top:0;z-index:2;${MONTH_W}padding:.4rem .3rem;white-space:nowrap;font-weight:800;color:var(--t);font-size:.85rem;text-align:center;background:var(--s2);${GRID}">${l}</th>`).join('')}
+        <th style="position:sticky;top:0;z-index:2;padding:.4rem .5rem;white-space:nowrap;font-size:.85rem;color:var(--bl);font-weight:800;background:var(--bl-l);${GRID}">합계</th>
       </tr>
       ${bodyRows}
-    </table>
-    </div>`;
+    </table>`;
   body.querySelectorAll('.ygrid-cell').forEach(input=>{
     input.onfocus=()=>{ pushUndo(); input.select(); };
     input.onchange=()=>{
