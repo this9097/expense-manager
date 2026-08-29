@@ -575,6 +575,18 @@ applyThemeColor(localStorage.getItem(LS_THEME) || 'default', false);
 
 /* ── 유틸 ── */
 function fmtWon(n){ n=Math.round(n||0); const neg=n<0; n=Math.abs(n); return (neg?'-':'')+n.toLocaleString('ko-KR')+'원'; }
+function evalAmountExpr(raw){
+  const s=(raw||'').replace(/,/g,'').trim();
+  if(!s) return 0;
+  if(/^[0-9+\-*/(). ]+$/.test(s) && /[+\-*/]/.test(s.replace(/^-/,''))){
+    try{
+      // eslint-disable-next-line no-new-func
+      const r=Function('"use strict"; return (' + s + ');')();
+      if(typeof r==='number' && isFinite(r)) return Math.round(r);
+    }catch(e){}
+  }
+  return parseInt(s.replace(/[^0-9-]/g,''))||0;
+}
 function toast(msg,ms=2200){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),ms); }
 function sumMonth(items, mi){ return (items||[]).reduce((a,it)=>a+(Number(it.m[mi])||0),0); }
 function sumYear(items){ return (items||[]).reduce((a,it)=>a+it.m.reduce((x,y)=>x+(Number(y)||0),0),0); }
@@ -1136,7 +1148,7 @@ function renderEntry(){
       nameInput.onfocus=()=>{ pushUndo(); };
       nameInput.onchange=()=>{ it.name=nameInput.value.trim()||it.name; saveLocal(); };
       amtInput.onfocus=()=>{ pushUndo(); amtInput.select(); };
-      amtInput.onchange=()=>{ const v=parseInt(amtInput.value.replace(/[^0-9-]/g,''))||0; it.m[mi]=v; amtInput.value=v.toLocaleString('ko-KR'); saveLocal(); renderDash(); renderEntry(); };
+      amtInput.onchange=()=>{ const v=evalAmountExpr(amtInput.value); it.m[mi]=v; amtInput.value=v.toLocaleString('ko-KR'); saveLocal(); renderDash(); renderEntry(); };
       row.querySelector('.ei-memo').onclick=()=>openMemoEditor(it, mi);
       row.querySelector('.ei-more').onclick=()=>openItemActions(groupKey, items, idx);
       box.appendChild(row);
