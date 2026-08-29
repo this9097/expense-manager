@@ -986,10 +986,12 @@ function renderYearGrid(){
   let cellsHtml='';
 
   // 연도 이동 행 (표 첫 행, 전체 스팬, 세로 스크롤 시 맨 위 고정)
-  cellsHtml+=`<div style="grid-column:1/-1;position:sticky;top:0;z-index:5;text-align:center;background:var(--s);padding:.4rem .5rem;${HGRID}">
-    <button class="year-nav-btn" onclick="yearGridNavYear(-1)">‹</button>
-    <span style="margin:0 1rem;font-weight:900;font-size:1rem;color:var(--t)">${yearGridYear}년</span>
-    <button class="year-nav-btn" onclick="yearGridNavYear(1)">›</button>
+  cellsHtml+=`<div style="grid-column:1/-1;position:sticky;top:0;z-index:5;background:var(--s);${HGRID}">
+    <div style="position:sticky;left:0;width:fit-content;padding:.4rem .5rem;">
+      <button class="year-nav-btn" onclick="yearGridNavYear(-1)">‹</button>
+      <span style="margin:0 1rem;font-weight:900;font-size:1rem;color:var(--t)">${yearGridYear}년</span>
+      <button class="year-nav-btn" onclick="yearGridNavYear(1)">›</button>
+    </div>
   </div>`;
 
   // 헤더 행 (항목 / 1~12월 / 합계) - 연도 행 아래에 고정
