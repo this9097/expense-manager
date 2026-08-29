@@ -1021,11 +1021,16 @@ function renderItemDetailYoY(){
         <span>${curY}년 ${MONTH_LABELS[curM]} vs ${prevY}년 ${MONTH_LABELS[curM]}</span>
         <button class="year-nav-btn" onclick="itemDetailNavMonth(1)">›</button>
       </div>
-      <div class="card"><div class="cb" style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap">
-        <div><div class="note">${prevY}년 ${MONTH_LABELS[curM]}</div><div class="mono" style="font-weight:800">${fmtWon(prevVal)}</div></div>
-        <div style="font-size:1.1rem;color:var(--sub)">→</div>
-        <div><div class="note">${curY}년 ${MONTH_LABELS[curM]}</div><div class="mono" style="font-weight:800">${fmtWon(thisVal)}</div></div>
-        <div style="margin-left:auto;text-align:right"><div class="note">전년 동월 대비</div><div class="mono ${cls}" style="font-weight:800">${sign}${fmtWon(diff)} (${sign}${pct}%)</div></div>
+      <div class="card"><div class="cb">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem">
+          <div><div class="note">${prevY}년 ${MONTH_LABELS[curM]}</div><div class="mono" style="font-weight:800">${fmtWon(prevVal)}</div></div>
+          <div style="font-size:1.1rem;color:var(--sub)">→</div>
+          <div style="text-align:right"><div class="note">${curY}년 ${MONTH_LABELS[curM]}</div><div class="mono" style="font-weight:800">${fmtWon(thisVal)}</div></div>
+        </div>
+        <div style="margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center">
+          <div class="note">전년 동월 대비</div>
+          <div class="mono ${cls}" style="font-weight:800">${sign}${fmtWon(diff)} (${sign}${pct}%)</div>
+        </div>
       </div></div>`;
   }else{
     yoyEl.style.display='none'; yoyEl.innerHTML='';
