@@ -975,44 +975,48 @@ function yearGridNavYear(delta){
   yearGridYear=ys[idx];
   renderYearGrid();
 }
-function yearGridSectionHtml(groupKey, yd){
-  const meta=SECTION_META[groupKey]; const items=meta.arr(yd);
-  const B='border:1px solid var(--bd)';
-  const monthTotals=new Array(12).fill(0);
-  const rows=items.map((it,idx)=>{
-    const cells=MONTH_LABELS.map((_,mi)=>{
-      const v=Number(it.m[mi])||0; monthTotals[mi]+=v;
-      return `<td style="padding:0;${B}"><input class="ygrid-cell" data-group="${groupKey}" data-idx="${idx}" data-mi="${mi}" inputmode="numeric" value="${v.toLocaleString('ko-KR')}" style="display:block;box-sizing:border-box;width:96px;text-align:right;border:none;padding:.3rem .4rem;font-size:.75rem;font-family:'SF Mono',Consolas,monospace;background:transparent"></td>`;
-    }).join('');
-    const yearTotal=it.m.reduce((a,v)=>a+(Number(v)||0),0);
-    return `<tr><td style="position:sticky;left:0;background:var(--s);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;width:130px;max-width:130px;padding:.3rem .5rem;font-size:.8rem;font-weight:600;${B}">${it.name}</td>${cells}<td style="text-align:right;font-weight:900;font-size:.82rem;padding:.3rem .5rem;white-space:nowrap;background:var(--bl-l);color:var(--bl);${B}" class="mono">${fmtWon(yearTotal)}</td></tr>`;
-  }).join('');
-  const totalCells=monthTotals.map(v=>`<td style="text-align:right;padding:.3rem .35rem;font-size:.78rem;font-weight:900;white-space:nowrap;background:var(--bl-l);color:var(--bl);${B}" class="mono">${fmtWon(v)}</td>`).join('');
-  const yearSum=monthTotals.reduce((a,b)=>a+b,0);
-  if(!items.length) return '';
-  return `<div class="sl" style="margin-top:.9rem">${meta.label}</div>
-    <div style="overflow-x:auto">
-    <table style="border-collapse:collapse">
-      <tr>
-        <th style="position:sticky;left:0;background:var(--s2);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;width:130px;max-width:130px;padding:.3rem .5rem;font-size:.68rem;color:var(--t3);${B}">항목</th>
-        ${MONTH_LABELS.map(l=>`<th style="width:96px;box-sizing:border-box;padding:.3rem .35rem;white-space:nowrap;font-weight:700;color:var(--t3);font-size:.66rem;text-align:center;background:var(--s2);${B}">${l}</th>`).join('')}
-        <th style="padding:.3rem .5rem;white-space:nowrap;font-size:.7rem;color:var(--bl);font-weight:800;background:var(--bl-l);${B}">합계</th>
-      </tr>
-      ${rows}
-      <tr>
-        <td style="position:sticky;left:0;background:var(--bl-l);color:var(--bl);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;width:130px;max-width:130px;padding:.3rem .5rem;font-size:.82rem;${B}">합계</td>
-        ${totalCells}
-        <td style="text-align:right;font-weight:900;padding:.3rem .5rem;white-space:nowrap;font-size:.85rem;background:var(--bl-l);color:var(--bl);${B}" class="mono">${fmtWon(yearSum)}</td>
-      </tr>
-    </table>
-    </div>`;
-}
 function renderYearGrid(){
   document.getElementById('yearGridYearLabel').textContent=yearGridYear+'년';
   const yd=state.years[yearGridYear];
   const body=document.getElementById('yearGridBody');
   if(!yd){ body.innerHTML='<div class="note">데이터가 없습니다</div>'; return; }
-  body.innerHTML=['필수','선택','투자','수입'].map(k=>yearGridSectionHtml(k,yd)).join('');
+  const B='border:1px solid var(--bd)';
+  const NAME_COL='position:sticky;left:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;width:130px;max-width:130px;padding:.3rem .5rem;'+B;
+  const MONTH_COL='width:96px;box-sizing:border-box;padding:.3rem .35rem;white-space:nowrap;'+B;
+  const YELLOW_BG='#FEF3C7', YELLOW_TX='#92610A';
+  const grandMonthTotals=new Array(12).fill(0);
+  let grandTotal=0;
+  let bodyRows='';
+  ['필수','선택','투자','수입'].forEach(groupKey=>{
+    const meta=SECTION_META[groupKey]; const items=meta.arr(yd);
+    if(!items.length) return;
+    bodyRows+=`<tr><td colspan="14" style="background:var(--s2);font-weight:800;padding:.45rem .5rem;font-size:.8rem;${B}">${meta.label}</td></tr>`;
+    const monthTotals=new Array(12).fill(0);
+    items.forEach((it,idx)=>{
+      const cells=MONTH_LABELS.map((_,mi)=>{
+        const v=Number(it.m[mi])||0; monthTotals[mi]+=v; grandMonthTotals[mi]+=v;
+        return `<td style="padding:0;${B}"><input class="ygrid-cell" data-group="${groupKey}" data-idx="${idx}" data-mi="${mi}" inputmode="numeric" value="${v.toLocaleString('ko-KR')}" style="display:block;box-sizing:border-box;width:96px;text-align:right;border:none;padding:.3rem .4rem;font-size:.75rem;font-family:'SF Mono',Consolas,monospace;background:transparent"></td>`;
+      }).join('');
+      const yearTotal=it.m.reduce((a,v)=>a+(Number(v)||0),0);
+      grandTotal+=yearTotal;
+      bodyRows+=`<tr><td style="${NAME_COL}background:var(--s);font-size:.8rem;font-weight:600">${it.name}</td>${cells}<td style="text-align:right;font-weight:900;font-size:.82rem;padding:.3rem .5rem;white-space:nowrap;background:var(--bl-l);color:var(--bl);${B}" class="mono">${fmtWon(yearTotal)}</td></tr>`;
+    });
+    const totalCells=monthTotals.map(v=>`<td style="text-align:right;padding:.3rem .35rem;font-size:.78rem;font-weight:900;white-space:nowrap;background:var(--bl-l);color:var(--bl);${B}" class="mono">${fmtWon(v)}</td>`).join('');
+    const sectionSum=monthTotals.reduce((a,b)=>a+b,0);
+    bodyRows+=`<tr><td style="${NAME_COL}background:var(--bl-l);color:var(--bl);font-weight:900;font-size:.82rem">합계</td>${totalCells}<td style="text-align:right;font-weight:900;padding:.3rem .5rem;white-space:nowrap;font-size:.85rem;background:var(--bl-l);color:var(--bl);${B}" class="mono">${fmtWon(sectionSum)}</td></tr>`;
+  });
+  const grandCells=grandMonthTotals.map(v=>`<td style="text-align:right;padding:.3rem .35rem;font-size:.78rem;font-weight:900;white-space:nowrap;background:${YELLOW_BG};color:${YELLOW_TX};${B}" class="mono">${fmtWon(v)}</td>`).join('');
+  bodyRows+=`<tr><td style="${NAME_COL}background:${YELLOW_BG};color:${YELLOW_TX};font-weight:900;font-size:.85rem">전체 합계</td>${grandCells}<td style="text-align:right;font-weight:900;padding:.3rem .5rem;white-space:nowrap;font-size:.9rem;background:${YELLOW_BG};color:${YELLOW_TX};${B}" class="mono">${fmtWon(grandTotal)}</td></tr>`;
+  body.innerHTML=`<div style="overflow-x:auto">
+    <table style="border-collapse:collapse">
+      <tr>
+        <th style="${NAME_COL}background:var(--s2);text-align:left;font-size:.68rem;color:var(--t3)">항목</th>
+        ${MONTH_LABELS.map(l=>`<th style="${MONTH_COL}font-weight:700;color:var(--t3);font-size:.66rem;text-align:center;background:var(--s2)">${l}</th>`).join('')}
+        <th style="padding:.3rem .5rem;white-space:nowrap;font-size:.7rem;color:var(--bl);font-weight:800;background:var(--bl-l);${B}">합계</th>
+      </tr>
+      ${bodyRows}
+    </table>
+    </div>`;
   body.querySelectorAll('.ygrid-cell').forEach(input=>{
     input.onfocus=()=>{ pushUndo(); input.select(); };
     input.onchange=()=>{
