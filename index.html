@@ -280,6 +280,7 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
       <span id="period-switch-entry-label">—</span><span class="ps-arrow">▾</span>
     </button>
     <button class="btn btn-s" id="entry-undo-btn" style="margin:0 0 .65rem;opacity:.4" onclick="undoLast()">↺ 되돌리기</button>
+    <button class="btn btn-s" id="year-grid-btn" style="margin:0 0 .65rem" onclick="openYearGrid()">📊 연간 표로 보기 (1~12월)</button>
     <div class="card" style="margin-bottom:.65rem">
       <div class="cb" style="padding:.9rem 1.1rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.3rem .5rem">
         <div style="min-width:0">
@@ -352,6 +353,19 @@ nav button.active{color:#fff;border-bottom-color:#3B82F6}
       <div class="year-label" id="itemActionTitle" style="margin-bottom:.9rem"></div>
       <div id="itemActionBody"></div>
       <button class="btn btn-s" onclick="closeItemActions()">취소</button>
+    </div>
+  </div>
+
+  <!-- 연간 표(엑셀형) 보기 -->
+  <div class="dmodal-bg" id="yearGridModalBg">
+    <div class="dmodal" style="max-width:96vw">
+      <div class="year-nav" style="margin-bottom:.7rem">
+        <button onclick="yearGridNavYear(-1)">‹</button>
+        <span class="year-label" id="yearGridYearLabel"></span>
+        <button onclick="yearGridNavYear(1)">›</button>
+      </div>
+      <div id="yearGridBody"></div>
+      <button class="btn btn-s" style="margin-top:.9rem" onclick="closeYearGrid()">닫기</button>
     </div>
   </div>
 
@@ -941,6 +955,75 @@ function openItemActions(groupKey, items, idx){
   _bhPush();
 }
 function closeItemActions(){ document.getElementById('itemActionModalBg').classList.remove('open'); }
+
+/* 연간 표(엑셀형) 보기 */
+let yearGridYear=null;
+function openYearGrid(){
+  yearGridYear=cur.year;
+  renderYearGrid();
+  document.getElementById('yearGridModalBg').classList.add('open');
+  _bhPush();
+}
+function closeYearGrid(){ document.getElementById('yearGridModalBg').classList.remove('open'); }
+function yearGridNavYear(delta){
+  const ys=years(); let idx=ys.indexOf(yearGridYear);
+  if(idx===-1) idx=ys.length-1;
+  idx+=delta;
+  if(idx<0 || idx>=ys.length){ toast('설정 탭에서 새 연도를 추가할 수 있습니다'); return; }
+  yearGridYear=ys[idx];
+  renderYearGrid();
+}
+function yearGridSectionHtml(groupKey, yd){
+  const meta=SECTION_META[groupKey]; const items=meta.arr(yd);
+  const monthTotals=new Array(12).fill(0);
+  const rows=items.map((it,idx)=>{
+    const cells=MONTH_LABELS.map((_,mi)=>{
+      const v=Number(it.m[mi])||0; monthTotals[mi]+=v;
+      return `<td style="padding:.15rem"><input class="ygrid-cell" data-group="${groupKey}" data-idx="${idx}" data-mi="${mi}" inputmode="numeric" value="${v.toLocaleString('ko-KR')}" style="width:66px;text-align:right;border:1px solid var(--bd);border-radius:6px;padding:.25rem .35rem;font-size:.76rem;font-family:'SF Mono',Consolas,monospace;background:var(--s)"></td>`;
+    }).join('');
+    const yearTotal=it.m.reduce((a,v)=>a+(Number(v)||0),0);
+    return `<tr><td style="position:sticky;left:0;background:var(--s);white-space:nowrap;padding:.3rem .5rem;font-size:.8rem;font-weight:600">${it.name}</td>${cells}<td style="text-align:right;font-weight:800;font-size:.8rem;padding:.3rem .5rem;white-space:nowrap" class="mono">${fmtWon(yearTotal)}</td></tr>`;
+  }).join('');
+  const totalCells=monthTotals.map(v=>`<td style="text-align:right;padding:.3rem .35rem;font-size:.76rem;font-weight:800;white-space:nowrap" class="mono">${fmtWon(v)}</td>`).join('');
+  const yearSum=monthTotals.reduce((a,b)=>a+b,0);
+  if(!items.length) return '';
+  return `<div class="sl" style="margin-top:.9rem">${meta.label}</div>
+    <div style="overflow-x:auto">
+    <table style="border-collapse:collapse">
+      <tr>
+        <th style="position:sticky;left:0;background:var(--s);text-align:left;padding:.3rem .5rem;white-space:nowrap;font-size:.68rem;color:var(--t3)">항목</th>
+        ${MONTH_LABELS.map(l=>`<th style="padding:.3rem .35rem;white-space:nowrap;font-weight:700;color:var(--t3);font-size:.66rem">${l}</th>`).join('')}
+        <th style="padding:.3rem .5rem;white-space:nowrap;font-size:.68rem;color:var(--t3)">합계</th>
+      </tr>
+      ${rows}
+      <tr style="border-top:2px solid var(--bd)">
+        <td style="position:sticky;left:0;background:var(--s);font-weight:800;padding:.3rem .5rem;white-space:nowrap;font-size:.8rem">합계</td>
+        ${totalCells}
+        <td style="text-align:right;font-weight:900;padding:.3rem .5rem;white-space:nowrap;font-size:.8rem" class="mono">${fmtWon(yearSum)}</td>
+      </tr>
+    </table>
+    </div>`;
+}
+function renderYearGrid(){
+  document.getElementById('yearGridYearLabel').textContent=yearGridYear+'년';
+  const yd=state.years[yearGridYear];
+  const body=document.getElementById('yearGridBody');
+  if(!yd){ body.innerHTML='<div class="note">데이터가 없습니다</div>'; return; }
+  body.innerHTML=['필수','선택','투자','수입'].map(k=>yearGridSectionHtml(k,yd)).join('');
+  body.querySelectorAll('.ygrid-cell').forEach(input=>{
+    input.onfocus=()=>{ pushUndo(); input.select(); };
+    input.onchange=()=>{
+      const groupKey=input.dataset.group, idx=parseInt(input.dataset.idx), mi=parseInt(input.dataset.mi);
+      const items=SECTION_META[groupKey].arr(yd);
+      const it=items[idx]; if(!it) return;
+      const v=evalAmountExpr(input.value);
+      it.m[mi]=v;
+      saveLocal();
+      renderYearGrid();
+      if(yearGridYear===cur.year){ renderDash(); renderEntry(); }
+    };
+  });
+}
 
 /* 항목 메모 (특정 월의 상세 내역 메모) */
 let _memoTarget=null;
@@ -1672,9 +1755,11 @@ window.addEventListener('popstate', function(){
   const periodEl=document.getElementById('periodModalBg');
   const itemActionEl=document.getElementById('itemActionModalBg');
   const itemDetailEl=document.getElementById('itemDetailModalBg');
+  const yearGridEl=document.getElementById('yearGridModalBg');
   const memoEl=document.getElementById('memoModalBg');
   if(memoEl && memoEl.classList.contains('open')){ closeMemoEditor(); _bhPush(); return; }
   if(itemDetailEl && itemDetailEl.classList.contains('open')){ closeItemDetail(); _bhPush(); return; }
+  if(yearGridEl && yearGridEl.classList.contains('open')){ closeYearGrid(); _bhPush(); return; }
   if(itemActionEl && itemActionEl.classList.contains('open')){ closeItemActions(); _bhPush(); return; }
   if(periodEl && periodEl.classList.contains('open')){ closePeriodModal(); _bhPush(); return; }
   if(modalEl && modalEl.classList.contains('open')){ modalDone(false); _bhPush(); return; }
