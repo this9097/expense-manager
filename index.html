@@ -979,7 +979,7 @@ function yearGridSectionHtml(groupKey, yd){
   const rows=items.map((it,idx)=>{
     const cells=MONTH_LABELS.map((_,mi)=>{
       const v=Number(it.m[mi])||0; monthTotals[mi]+=v;
-      return `<td style="padding:.15rem"><input class="ygrid-cell" data-group="${groupKey}" data-idx="${idx}" data-mi="${mi}" inputmode="numeric" value="${v.toLocaleString('ko-KR')}" style="width:66px;text-align:right;border:1px solid var(--bd);border-radius:6px;padding:.25rem .35rem;font-size:.76rem;font-family:'SF Mono',Consolas,monospace;background:var(--s)"></td>`;
+      return `<td style="padding:.15rem"><input class="ygrid-cell" data-group="${groupKey}" data-idx="${idx}" data-mi="${mi}" inputmode="numeric" value="${v.toLocaleString('ko-KR')}" style="box-sizing:border-box;width:96px;text-align:right;border:1px solid var(--bd);border-radius:6px;padding:.3rem .4rem;font-size:.75rem;font-family:'SF Mono',Consolas,monospace;background:var(--s)"></td>`;
     }).join('');
     const yearTotal=it.m.reduce((a,v)=>a+(Number(v)||0),0);
     return `<tr><td style="position:sticky;left:0;background:var(--s);white-space:nowrap;padding:.3rem .5rem;font-size:.8rem;font-weight:600">${it.name}</td>${cells}<td style="text-align:right;font-weight:800;font-size:.8rem;padding:.3rem .5rem;white-space:nowrap" class="mono">${fmtWon(yearTotal)}</td></tr>`;
@@ -992,7 +992,7 @@ function yearGridSectionHtml(groupKey, yd){
     <table style="border-collapse:collapse">
       <tr>
         <th style="position:sticky;left:0;background:var(--s);text-align:left;padding:.3rem .5rem;white-space:nowrap;font-size:.68rem;color:var(--t3)">항목</th>
-        ${MONTH_LABELS.map(l=>`<th style="padding:.3rem .35rem;white-space:nowrap;font-weight:700;color:var(--t3);font-size:.66rem">${l}</th>`).join('')}
+        ${MONTH_LABELS.map(l=>`<th style="width:96px;box-sizing:border-box;padding:.3rem .35rem;white-space:nowrap;font-weight:700;color:var(--t3);font-size:.66rem;text-align:center">${l}</th>`).join('')}
         <th style="padding:.3rem .5rem;white-space:nowrap;font-size:.68rem;color:var(--t3)">합계</th>
       </tr>
       ${rows}
