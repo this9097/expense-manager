@@ -981,7 +981,7 @@ function renderYearGrid(){
   const body=document.getElementById('yearGridBody');
   if(!yd){ body.innerHTML='<div class="note">데이터가 없습니다</div>'; return; }
   const B='border:1px solid var(--bd)';
-  const NAME_COL='position:sticky;left:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;width:130px;max-width:130px;padding:.3rem .5rem;'+B;
+  const NAME_COL='position:sticky;left:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;width:130px;max-width:130px;padding:.3rem .5rem;box-shadow:inset 0 0 0 1px var(--bd);';
   const MONTH_COL='width:96px;box-sizing:border-box;padding:.3rem .35rem;white-space:nowrap;'+B;
   const YELLOW_BG='#FEF3C7', YELLOW_TX='#92610A';
   const clr=(v,base)=> v<0 ? 'var(--rd)' : base;
